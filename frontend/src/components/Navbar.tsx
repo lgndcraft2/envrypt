@@ -13,7 +13,7 @@ const Navbar: React.FC = () => {
                             <path clipRule="evenodd" d="M24 4H6V17.3333V30.6667H24V44H42V30.6667V17.3333H24V4Z" fill="currentColor" fillRule="evenodd"></path>
                         </svg>
                     </div>
-                    <h2 className="text-xl font-bold tracking-tighter flex items-end"><span className="text-3xl text-primary leading-none">Env</span>rypt</h2>
+                    <h2 className="text-xl font-bold tracking-tighter"><span className="text-primary">Env</span>rypt</h2>
                 </div>
                 <div className="hidden md:flex items-center gap-8">
                     <button onClick={() => navigate('/')} className="text-sm font-medium text-white/70 transition-colors hover:text-primary cursor-pointer">Home</button>
