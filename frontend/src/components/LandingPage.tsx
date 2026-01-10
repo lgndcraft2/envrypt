@@ -23,17 +23,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                                 Security Protocol Active
                             </div>
                             <h1 className="mb-4 text-5xl font-black leading-tight tracking-[-0.04em] md:text-7xl">
-                                CRYPT-X
+                                Secure Secrets Management for Teams
                             </h1>
                             <h2 className="mb-10 max-w-lg text-lg font-normal text-white/60 md:text-xl">
-                                Let your partners know your secrets... <span className="text-white font-medium">safely.</span> High-performance, binary-grade encryption for modern communication.
+                                Stop pasting API keys in Slack and Git. <span className="text-white font-medium">Store them safely.</span> Shared encryption for modern development teams.
                             </h2>
                             <div className="flex flex-col sm:flex-row gap-4">
-                                <button className="flex h-14 min-w-[200px] cursor-pointer items-center justify-center rounded-xl bg-primary px-8 text-lg font-bold transition-all hover:scale-105 glow-shadow">
+                                <button onClick={() => onNavigate('auth', 'signup')} className="flex h-14 min-w-[200px] cursor-pointer items-center justify-center rounded-xl bg-primary px-8 text-lg font-bold transition-all hover:scale-105 glow-shadow">
                                     Get Started
                                 </button>
                                 <button className="flex h-14 min-w-[200px] cursor-pointer items-center justify-center rounded-xl border border-white/10 bg-white/5 px-8 text-lg font-bold backdrop-blur-sm transition-all hover:bg-white/10">
-                                    View Docs
+                                    View Architecture
                                 </button>
                             </div>
                         </div>
@@ -55,17 +55,17 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                                     </div>
                                 </div>
                                 <div className="flex flex-col gap-4 text-center md:text-left">
-                                    <div className="text-xs font-bold uppercase tracking-[0.2em] text-primary text-glow">Secure Foundation</div>
-                                    <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Military Grade Infrastructure</h2>
+                                    <div className="text-xs font-bold uppercase tracking-[0.2em] text-primary text-glow">Hybrid Architecture</div>
+                                    <h2 className="text-3xl font-bold tracking-tight md:text-4xl">Segregated Security Model</h2>
                                     <p className="text-lg text-white/60 max-w-xl">
-                                        Our platform is hosted on Tier-4 data centers with biometric access controls, TEMPEST-shielded hardware, and 24/7 armed monitoring. Your encrypted packets reside in a digital fortress.
+                                        We use a <strong>Hybrid Model</strong> to protect your secrets. Only the <strong>Backend (FastAPI)</strong> holds the decryption keys in memory. The <strong>Database (Supabase)</strong> only ever sees "gibberish" (ciphertext). An attacker must compromise both systems simultaneously to steal anything.
                                     </p>
                                     <div className="mt-2 flex flex-wrap justify-center md:justify-start gap-4">
                                         <div className="flex items-center gap-2 rounded-md border border-white/5 bg-white/5 px-3 py-1.5 text-xs font-mono text-white/40">
-                                            <span className="size-1.5 rounded-full bg-primary"></span> DC-ZONE_ALPHA
+                                            <span className="size-1.5 rounded-full bg-primary"></span> FASTAPI_ENCRYPTION_BRAIN
                                         </div>
                                         <div className="flex items-center gap-2 rounded-md border border-white/5 bg-white/5 px-3 py-1.5 text-xs font-mono text-white/40">
-                                            <span className="size-1.5 rounded-full bg-primary"></span> ISO-27001_COMPLIANT
+                                            <span className="size-1.5 rounded-full bg-primary"></span> SUPABASE_AUTH_STORE
                                         </div>
                                     </div>
                                 </div>
@@ -80,18 +80,18 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                                 <div className="inline-flex size-14 items-center justify-center rounded-xl bg-primary/10 text-primary">
                                     <span className="material-symbols-outlined text-3xl">hub</span>
                                 </div>
-                                <h2 className="text-3xl font-bold tracking-tight md:text-4xl leading-tight">Transmission Protocol:<br /><span className="text-primary">TLS 1.3 + AES-GCM</span></h2>
+                                <h2 className="text-3xl font-bold tracking-tight md:text-4xl leading-tight">The Workflow:<br /><span className="text-primary">Write &rarr; Encrypt &rarr; Store</span></h2>
                                 <p className="text-lg text-white/60">
-                                    Beyond standard E2EE, we employ Perfect Forward Secrecy (PFS) via Elliptic Curve Diffie-Hellman (ECDHE). Every message exchange generates a unique session key that is instantly purged upon completion.
+                                    When you send a key, FastAPI encrypts it instantly. The database never sees the plaintext. When an authorized user requests it, we decrypt it on-demand for a brief window.
                                 </p>
                                 <ul className="flex flex-col gap-4">
                                     <li className="flex items-start gap-3 text-sm text-white/70">
                                         <span className="material-symbols-outlined text-primary text-lg">check_circle</span>
-                                        <span>Zero-latency handshake for immediate secure tunneling.</span>
+                                        <span><strong>Write:</strong> User sends key &rarr; FastAPI Encrypts &rarr; DB Stores Ciphertext.</span>
                                     </li>
                                     <li className="flex items-start gap-3 text-sm text-white/70">
                                         <span className="material-symbols-outlined text-primary text-lg">check_circle</span>
-                                        <span>Quantum-resistant key encapsulation mechanisms (Ready).</span>
+                                        <span><strong>Read:</strong> Authorized User requests &rarr; FastAPI Decrypts &rarr; User sees key.</span>
                                     </li>
                                 </ul>
                             </div>
@@ -101,33 +101,33 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                                     <div className="flex w-full items-center justify-between">
                                         <div className="flex flex-col items-center gap-2">
                                             <div className="size-12 rounded-lg border border-white/10 bg-black flex items-center justify-center">
-                                                <span className="material-symbols-outlined text-white/40">terminal</span>
+                                                <span className="material-symbols-outlined text-white/40">person</span>
                                             </div>
-                                            <span className="text-[10px] font-mono text-white/30 uppercase">Client A</span>
+                                            <span className="text-[10px] font-mono text-white/30 uppercase">User</span>
                                         </div>
                                         <div className="flex-1 px-4">
                                             <div className="relative h-[2px] w-full bg-gradient-to-r from-primary/0 via-primary to-primary/0">
-                                                <div className="absolute -top-1 left-1/2 -translate-x-1/2 rounded-full bg-primary px-2 py-0.5 text-[8px] font-bold text-white uppercase">Encrypted</div>
+                                                <div className="absolute -top-1 left-1/2 -translate-x-1/2 rounded-full bg-primary px-2 py-0.5 text-[8px] font-bold text-white uppercase">AES-256</div>
                                             </div>
                                         </div>
                                         <div className="flex flex-col items-center gap-2">
                                             <div className="size-12 rounded-lg border border-white/10 bg-black flex items-center justify-center">
-                                                <span className="material-symbols-outlined text-white/40">terminal</span>
+                                                <span className="material-symbols-outlined text-white/40">database</span>
                                             </div>
-                                            <span className="text-[10px] font-mono text-white/30 uppercase">Client B</span>
+                                            <span className="text-[10px] font-mono text-white/30 uppercase">DB Store</span>
                                         </div>
                                     </div>
                                     <div className="w-full space-y-3 font-mono text-[10px]">
                                         <div className="flex justify-between text-primary/60 border-b border-primary/20 pb-1">
-                                            <span>[SYSTEM LOG]</span>
-                                            <span>SECURE_PIPE_OPEN</span>
+                                            <span>[SYSTEM PROCESS]</span>
+                                            <span>ENCRYPTION_LOG</span>
                                         </div>
                                         <div className="text-white/40 break-all leading-tight">
-                                            01001000 01100101 01101100 01101100 01101111 00101101 01010100 01001100 01010011 00101101 00110001 00101110 00110011
+                                            KEY: "sk_live_..." &rarr; ENCRYPTED: "0x7f3a2b..."
                                         </div>
                                         <div className="flex items-center gap-2 text-[#0bda5b]">
                                             <span className="material-symbols-outlined text-sm">verified</span>
-                                            <span>HANDSHAKE VERIFIED: ECDHE_RSA_WITH_AES_256_GCM_SHA384</span>
+                                            <span>STORED AS CIPHERTEXT</span>
                                         </div>
                                     </div>
                                 </div>
@@ -139,24 +139,24 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                     <div className="mx-auto max-w-[960px]">
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                             <div className="flex flex-col gap-2 rounded-2xl border border-white/5 bg-card-dark/50 p-8 backdrop-blur-sm">
-                                <p className="text-sm font-medium text-white/50 uppercase tracking-wider">Secrets Shared</p>
-                                <p className="text-3xl font-bold tracking-tight">1.2M+</p>
+                                <p className="text-sm font-medium text-white/50 uppercase tracking-wider">Audit Logs</p>
+                                <p className="text-3xl font-bold tracking-tight">100%</p>
                                 <p className="flex items-center gap-1 text-sm font-bold text-[#0bda5b]">
-                                    <span className="material-symbols-outlined text-sm">trending_up</span> +12.4%
+                                    <span className="material-symbols-outlined text-sm">visibility</span> Tracked
                                 </p>
                             </div>
                             <div className="flex flex-col gap-2 rounded-2xl border border-white/5 bg-card-dark/50 p-8 backdrop-blur-sm">
-                                <p className="text-sm font-medium text-white/50 uppercase tracking-wider">Active Nodes</p>
-                                <p className="text-3xl font-bold tracking-tight">500K+</p>
+                                <p className="text-sm font-medium text-white/50 uppercase tracking-wider">Ephemeral Views</p>
+                                <p className="text-3xl font-bold tracking-tight">30s</p>
                                 <p className="flex items-center gap-1 text-sm font-bold text-[#0bda5b]">
-                                    <span className="material-symbols-outlined text-sm">trending_up</span> +5.2%
+                                    <span className="material-symbols-outlined text-sm">timer</span> Window
                                 </p>
                             </div>
                             <div className="flex flex-col gap-2 rounded-2xl border border-white/5 bg-card-dark/50 p-8 backdrop-blur-sm">
-                                <p className="text-sm font-medium text-white/50 uppercase tracking-wider">Audits</p>
-                                <p className="text-3xl font-bold tracking-tight">Real-Time</p>
+                                <p className="text-sm font-medium text-white/50 uppercase tracking-wider">Encryption</p>
+                                <p className="text-3xl font-bold tracking-tight">AES-256</p>
                                 <p className="flex items-center gap-1 text-sm font-bold text-primary">
-                                    <span className="material-symbols-outlined text-sm">verified</span> Verified
+                                    <span className="material-symbols-outlined text-sm">lock</span> Standard
                                 </p>
                             </div>
                         </div>
@@ -165,42 +165,42 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                 <section className="relative z-10 px-4 py-20">
                     <div className="mx-auto max-w-[960px]">
                         <div className="mb-12 flex flex-col gap-4">
-                            <h2 className="text-3xl font-bold tracking-tight md:text-5xl">Engineered for Paranoia</h2>
+                            <h2 className="text-3xl font-bold tracking-tight md:text-5xl">Engineered for Security</h2>
                             <p className="max-w-2xl text-lg text-white/60 font-light">
-                                Our zero-trust architecture ensures that your data remains yours alone. No backdoors, no logs, no compromises.
+                                Features built specifically for development teams who care about operational security.
                             </p>
                         </div>
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
                             <div className="group flex flex-col gap-6 rounded-2xl border border-white/5 bg-card-dark p-8 transition-all hover:border-primary/50">
                                 <div className="flex size-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                                    <span className="material-symbols-outlined">lock</span>
+                                    <span className="material-symbols-outlined">history_edu</span>
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                    <h3 className="text-xl font-bold">End-to-End Encryption</h3>
+                                    <h3 className="text-xl font-bold">Audit Logs</h3>
                                     <p className="text-sm leading-relaxed text-white/50">
-                                        AES-256-GCM encryption happens directly in your browser. We never see your plaintext data.
+                                        Every time a key is revealed, we log exactly who viewed it and when. Catch potential leaks instantly.
                                     </p>
                                 </div>
                             </div>
                             <div className="group flex flex-col gap-6 rounded-2xl border border-white/5 bg-card-dark p-8 transition-all hover:border-primary/50">
                                 <div className="flex size-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                                    <span className="material-symbols-outlined">auto_delete</span>
+                                    <span className="material-symbols-outlined">timer</span>
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                    <h3 className="text-xl font-bold">Self-Destructing</h3>
+                                    <h3 className="text-xl font-bold">Ephemeral Viewing</h3>
                                     <p className="text-sm leading-relaxed text-white/50">
-                                        Links automatically vaporize after the first read or a set timer. Data is wiped from RAM instantly.
+                                        Keys are only decrypted on-demand and shown for a short window (e.g., 30 seconds) before disappearing.
                                     </p>
                                 </div>
                             </div>
                             <div className="group flex flex-col gap-6 rounded-2xl border border-white/5 bg-card-dark p-8 transition-all hover:border-primary/50">
                                 <div className="flex size-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                                    <span className="material-symbols-outlined">shield_with_heart</span>
+                                    <span className="material-symbols-outlined">shield_lock</span>
                                 </div>
                                 <div className="flex flex-col gap-2">
-                                    <h3 className="text-xl font-bold">Zero-Knowledge</h3>
+                                    <h3 className="text-xl font-bold">Segregated Security</h3>
                                     <p className="text-sm leading-relaxed text-white/50">
-                                        We hold no keys. Even under subpoena, we cannot decrypt your secrets because we simply don't have access.
+                                        Database sees data. Backend holds keys. Separation of concerns prevents single-point compromise.
                                     </p>
                                 </div>
                             </div>
@@ -210,11 +210,11 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                 <section className="relative z-10 px-4 py-20">
                     <div className="mx-auto max-w-[960px] overflow-hidden rounded-3xl border border-primary/20 bg-primary/5 p-8 md:p-16">
                         <div className="relative z-10 flex flex-col items-center gap-8 text-center">
-                            <h2 className="text-3xl font-bold tracking-tight md:text-5xl">Ready to secure your communication?</h2>
+                            <h2 className="text-3xl font-bold tracking-tight md:text-5xl">Ready to secure your team's secrets?</h2>
                             <p className="max-w-xl text-lg text-white/70">
-                                Join the elite circle of users who trust CRYPT-X for their most sensitive operational intelligence.
+                                Create an account and start managing your API keys securely today.
                             </p>
-                            <button className="h-14 rounded-xl bg-primary px-10 text-lg font-bold transition-all hover:scale-105 glow-shadow cursor-pointer">
+                            <button onClick={() => onNavigate('auth', 'signup')} className="h-14 rounded-xl bg-primary px-10 text-lg font-bold transition-all hover:scale-105 glow-shadow cursor-pointer">
                                 Create Secure Account
                             </button>
                             <div className="flex gap-4 text-xs font-medium text-white/40 uppercase tracking-widest">
@@ -222,7 +222,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                                 <span>•</span>
                                 <span>Open Source</span>
                                 <span>•</span>
-                                <span>GDPR Compliant</span>
+                                <span>Team Ready</span>
                             </div>
                         </div>
                     </div>
@@ -237,7 +237,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                                     <path clipRule="evenodd" d="M24 4H6V17.3333V30.6667H24V44H42V30.6667V17.3333H24V4Z" fill="currentColor" fillRule="evenodd"></path>
                                 </svg>
                             </div>
-                            <span className="text-sm font-bold tracking-widest text-white/50">CRYPT-X SECURE SYSTEM</span>
+                            <span className="text-sm font-bold tracking-widest text-white/50">SECURE_SECRETS DASHBOARD</span>
                         </div>
                         <div className="flex gap-8 text-xs font-medium text-white/40">
                             <a className="hover:text-primary" href="#">Privacy Policy</a>
@@ -245,7 +245,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                             <a className="hover:text-primary" href="#">Audit Log</a>
                             <a className="hover:text-primary" href="#">API</a>
                         </div>
-                        <p className="text-xs text-white/20">© 2024 Crypt-X Protocol. All rights encrypted.</p>
+                        <p className="text-xs text-white/20">© 2026 Secure Secrets. All rights reserved.</p>
                     </div>
                 </div>
             </footer>
@@ -254,3 +254,4 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
 };
 
 export default LandingPage;
+
