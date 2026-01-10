@@ -1,14 +1,13 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from './Navbar';
 
-interface LandingPageProps {
-    onNavigate: (page: 'landing' | 'auth', tab?: 'login' | 'signup') => void;
-}
+const LandingPage: React.FC = () => {
+    const navigate = useNavigate();
 
-const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
     return (
         <div className="bg-background-light dark:bg-background-dark font-display text-white selection:bg-primary/30 min-h-screen">
-            <Navbar onNavigate={onNavigate} />
+            <Navbar />
 
             <main className="relative pt-32">
                 <div className="binary-pattern pointer-events-none absolute inset-0 z-0 opacity-40"></div>
@@ -23,13 +22,13 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                                 Security Protocol Active
                             </div>
                             <h1 className="mb-4 text-5xl font-black leading-tight tracking-[-0.04em] md:text-7xl">
-                                Secure Secrets Management for Teams
+                                <span className="text-primary">Env</span>rypt
                             </h1>
                             <h2 className="mb-10 max-w-lg text-lg font-normal text-white/60 md:text-xl">
-                                Stop pasting API keys in Slack and Git. <span className="text-white font-medium">Store them safely.</span> Shared encryption for modern development teams.
+                                Secure Secrets Management for Teams. <span className="text-white font-medium">Stop pasting API keys.</span> Shared encryption for modern development teams.
                             </h2>
                             <div className="flex flex-col sm:flex-row gap-4">
-                                <button onClick={() => onNavigate('auth', 'signup')} className="flex h-14 min-w-[200px] cursor-pointer items-center justify-center rounded-xl bg-primary px-8 text-lg font-bold transition-all hover:scale-105 glow-shadow">
+                                <button onClick={() => navigate('/signup')} className="flex h-14 min-w-[200px] cursor-pointer items-center justify-center rounded-xl bg-primary px-8 text-lg font-bold transition-all hover:scale-105 glow-shadow">
                                     Get Started
                                 </button>
                                 <button className="flex h-14 min-w-[200px] cursor-pointer items-center justify-center rounded-xl border border-white/10 bg-white/5 px-8 text-lg font-bold backdrop-blur-sm transition-all hover:bg-white/10">
@@ -214,7 +213,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                             <p className="max-w-xl text-lg text-white/70">
                                 Create an account and start managing your API keys securely today.
                             </p>
-                            <button onClick={() => onNavigate('auth', 'signup')} className="h-14 rounded-xl bg-primary px-10 text-lg font-bold transition-all hover:scale-105 glow-shadow cursor-pointer">
+                            <button onClick={() => navigate('/signup')} className="h-14 rounded-xl bg-primary px-10 text-lg font-bold transition-all hover:scale-105 glow-shadow cursor-pointer">
                                 Create Secure Account
                             </button>
                             <div className="flex gap-4 text-xs font-medium text-white/40 uppercase tracking-widest">
@@ -237,7 +236,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                                     <path clipRule="evenodd" d="M24 4H6V17.3333V30.6667H24V44H42V30.6667V17.3333H24V4Z" fill="currentColor" fillRule="evenodd"></path>
                                 </svg>
                             </div>
-                            <span className="text-sm font-bold tracking-widest text-white/50">SECURE_SECRETS DASHBOARD</span>
+                            <span className="text-sm font-bold tracking-widest text-white/50">ENVRYPT SECURE SYSTEM</span>
                         </div>
                         <div className="flex gap-8 text-xs font-medium text-white/40">
                             <a className="hover:text-primary" href="#">Privacy Policy</a>
@@ -245,7 +244,7 @@ const LandingPage: React.FC<LandingPageProps> = ({ onNavigate }) => {
                             <a className="hover:text-primary" href="#">Audit Log</a>
                             <a className="hover:text-primary" href="#">API</a>
                         </div>
-                        <p className="text-xs text-white/20">© 2026 Secure Secrets. All rights reserved.</p>
+                        <p className="text-xs text-white/20">© 2026 Envrypt. All rights reserved.</p>
                     </div>
                 </div>
             </footer>

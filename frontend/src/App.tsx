@@ -1,23 +1,16 @@
-import { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LandingPage from './components/LandingPage';
 import AuthPortal from './components/AuthPortal';
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<'landing' | 'auth'>('landing');
-  const [authTab, setAuthTab] = useState<'login' | 'signup'>('login');
-
-  const handleNavigate = (page: 'landing' | 'auth', tab?: 'login' | 'signup') => {
-    setCurrentPage(page);
-    if (tab) {
-      setAuthTab(tab);
-    }
-  };
-
   return (
-    <>
-      {currentPage === 'landing' && <LandingPage onNavigate={handleNavigate} />}
-      {currentPage === 'auth' && <AuthPortal onNavigate={handleNavigate} initialTab={authTab} />}
-    </>
+    <Router>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<AuthPortal />} />
+        <Route path="/signup" element={<AuthPortal />} />
+      </Routes>
+    </Router>
   );
 }
 
