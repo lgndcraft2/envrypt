@@ -1,0 +1,101 @@
+import React from 'react';
+import { useNavigate } from 'react-router-dom';
+
+const TeamOnboarding: React.FC = () => {
+    const navigate = useNavigate();
+
+    return (
+        <div className="bg-background-dark font-display text-white selection:bg-primary/30 min-h-screen flex flex-col">
+            <div className="fixed top-6 left-0 right-0 z-50 flex justify-center px-4">
+                <nav className="flex h-16 w-full max-w-[960px] items-center justify-between rounded-xl border border-white/10 bg-black/40 px-8 backdrop-blur-xl">
+                    <div className="flex items-center gap-3">
+                        <div className="size-8 text-primary">
+                            <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                                <path clipRule="evenodd" d="M24 4H6V17.3333V30.6667H24V44H42V30.6667V17.3333H24V4Z" fill="currentColor" fillRule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <h2 className="text-xl font-bold tracking-tighter"><span className="text-primary">Env</span>rypt</h2>
+                    </div>
+                    <div className="flex items-center gap-6">
+                        <div className="hidden md:flex items-center gap-2 px-3 py-1 rounded-full border border-primary/20 bg-primary/5">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                            </span>
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Session Encrypted</span>
+                        </div>
+                        <div className="flex items-center gap-3 border-l border-white/10 pl-6">
+                            <div className="size-8 rounded-full bg-gradient-to-tr from-primary to-blue-400 flex items-center justify-center text-xs font-bold">JD</div>
+                        </div>
+                    </div>
+                </nav>
+            </div>
+            <main className="relative flex-1 flex items-center justify-center pt-24 pb-12">
+                <div className="binary-pattern pointer-events-none absolute inset-0 z-0 opacity-40"></div>
+                <div className="relative z-10 w-full max-w-[1000px] px-4">
+                    <div className="rounded-3xl border border-white/10 bg-black/60 backdrop-blur-md p-8 md:p-16 glow-border text-center overflow-hidden">
+                        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50"></div>
+                        <div className="mb-12">
+                            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">Welcome to <span className="text-primary text-glow">Envrypt</span></h1>
+                            <p className="text-white/60 text-lg max-w-xl mx-auto">Initialize your workspace. Secure collaboration begins with establishing your operational team environment.</p>
+                        </div>
+                        <div className="grid md:grid-cols-2 gap-8">
+                            <div className="group relative flex flex-col items-center p-8 rounded-2xl border border-white/10 bg-card-dark/40 transition-all hover:border-primary/40 hover:bg-card-dark/60">
+                                <div className="card-gradient absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl pointer-events-none"></div>
+                                <div className="relative mb-6">
+                                    <div className="flex size-20 items-center justify-center rounded-2xl bg-primary/10 text-primary border border-primary/20 glow-shadow">
+                                        <span className="material-symbols-outlined text-4xl">add_moderator</span>
+                                    </div>
+                                    <div className="absolute -top-1 -right-1 flex size-6 items-center justify-center rounded-full bg-primary text-[10px] font-bold">
+                                        <span className="material-symbols-outlined text-sm">shield</span>
+                                    </div>
+                                </div>
+                                <h3 className="text-2xl font-bold mb-3">Create Team</h3>
+                                <p className="text-sm text-white/50 mb-8 leading-relaxed">
+                                    Establish a new encrypted vault. You'll become the primary administrator and can define security protocols for your members.
+                                </p>
+                                <button onClick={() => navigate('/create-team')} className="mt-auto w-full h-14 rounded-xl bg-primary text-white font-bold transition-all hover:scale-[1.02] active:scale-[0.98] glow-shadow cursor-pointer">
+                                    Initialize New Team
+                                </button>
+                            </div>
+                            <div className="group relative flex flex-col items-center p-8 rounded-2xl border border-white/10 bg-card-dark/40 transition-all hover:border-primary/40 hover:bg-card-dark/60">
+                                <div className="card-gradient absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl pointer-events-none"></div>
+                                <div className="relative mb-6">
+                                    <div className="flex size-20 items-center justify-center rounded-2xl bg-white/5 text-white/70 border border-white/10">
+                                        <span className="material-symbols-outlined text-4xl">hub</span>
+                                    </div>
+                                    <div className="absolute -bottom-1 -right-1 flex size-6 items-center justify-center rounded-full bg-white/10 border border-white/20 text-[10px] font-bold">
+                                        <span className="material-symbols-outlined text-sm text-primary">key</span>
+                                    </div>
+                                </div>
+                                <h3 className="text-2xl font-bold mb-3">Join Team</h3>
+                                <p className="text-sm text-white/50 mb-8 leading-relaxed">
+                                    Connect to an existing secure node. You will need an authorized invitation code or access key provided by your administrator.
+                                </p>
+                                <button onClick={() => navigate('/join-team')} className="mt-auto w-full h-14 rounded-xl border border-white/20 bg-white/5 text-white font-bold transition-all hover:bg-white/10 hover:border-white/30 active:scale-[0.98] cursor-pointer">
+                                    Enter Access Key
+                                </button>
+                            </div>
+                        </div>
+                        <div className="mt-12 flex flex-col items-center gap-4">
+                            <div className="flex items-center gap-6 text-[10px] font-mono text-white/30 uppercase tracking-[0.2em]">
+                                <span className="flex items-center gap-1.5"><span className="size-1 bg-primary rounded-full"></span> Zero-Trust Mesh</span>
+                                <span className="flex items-center gap-1.5"><span className="size-1 bg-primary rounded-full"></span> PFS Enabled</span>
+                                <span className="flex items-center gap-1.5"><span className="size-1 bg-primary rounded-full"></span> ISO-27001</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+            <footer className="mt-auto py-8">
+                <div className="mx-auto max-w-[960px] px-4 text-center">
+                    <p className="text-[10px] font-mono text-white/20 tracking-widest uppercase">
+                        System Authorized: node_04.cryptx.local // handshake_success
+                    </p>
+                </div>
+            </footer>
+        </div>
+    );
+};
+
+export default TeamOnboarding;

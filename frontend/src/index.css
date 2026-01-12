@@ -34,4 +34,17 @@
   .text-glow {
     text-shadow: 0 0 10px rgba(19, 127, 236, 0.5);
   }
+
+  .card-gradient {
+    background: radial-gradient(circle at top right, rgba(19, 127, 236, 0.1), transparent);
+  }
+
+  .focus-glow-border:focus-within {
+    box-shadow: 0 0 0 1px rgba(19, 127, 236, 0.5), 0 0 15px rgba(19, 127, 236, 0.2);
+  }
+
+  .input-glow-focus:focus {
+    box-shadow: 0 0 15px rgba(19, 127, 236, 0.4);
+    border-color: #137fec;
+  }
 }
