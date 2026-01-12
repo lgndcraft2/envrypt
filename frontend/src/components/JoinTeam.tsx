@@ -56,7 +56,7 @@ const JoinTeam: React.FC = () => {
                             </div>
                         </div>
                         <div className="space-y-6">
-                            <button className="w-full h-14 rounded-xl bg-primary text-white font-bold text-lg transition-all hover:scale-[1.01] active:scale-[0.98] glow-shadow flex items-center justify-center gap-2 group cursor-pointer">
+                            <button onClick={() => navigate('/dashboard')} className="w-full h-14 rounded-xl bg-primary text-white font-bold text-lg transition-all hover:scale-[1.01] active:scale-[0.98] glow-shadow flex items-center justify-center gap-2 group cursor-pointer">
                                 Join Team
                                 <span className="transition-transform group-hover:translate-x-1">→</span>
                             </button>

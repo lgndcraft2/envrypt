@@ -50,7 +50,7 @@ const CreateTeam: React.FC = () => {
                                     <input className="w-full h-14 px-5 bg-card-dark/60 border border-white/10 rounded-xl text-white placeholder:text-white/20 focus:ring-0 focus:border-primary/40 focus:outline-none transition-all" placeholder="e.g. Acme Corp Engineering" type="text" />
                                 </div>
                             </div>
-                            <button className="w-full h-14 rounded-xl bg-primary text-white font-bold text-lg transition-all hover:scale-[1.02] active:scale-[0.98] glow-shadow flex items-center justify-center gap-2 cursor-pointer">
+                            <button onClick={() => navigate('/dashboard')} className="w-full h-14 rounded-xl bg-primary text-white font-bold text-lg transition-all hover:scale-[1.02] active:scale-[0.98] glow-shadow flex items-center justify-center gap-2 cursor-pointer">
                                 Create & Continue <span className="material-symbols-outlined text-xl">arrow_right_alt</span>
                             </button>
                         </div>
