@@ -93,4 +93,27 @@
     background-image: radial-gradient(circle at 2px 2px, rgba(255, 255, 255, 0.02) 1px, transparent 0);
     background-size: 24px 24px;
   }
+
+  .glow-modal {
+    box-shadow: 0 0 50px -10px rgba(19, 127, 236, 0.15);
+  }
+
+  .tech-border-b {
+    position: relative;
+  }
+
+  .tech-border-b::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 1px;
+    background: #137fec;
+    opacity: 0.5;
+  }
+
+  .token-prefix {
+    @apply font-mono text-[10px] text-slate-500 bg-slate-800/50 px-1.5 py-0.5 rounded border border-white/5;
+  }
 }
