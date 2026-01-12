@@ -116,4 +116,9 @@
   .token-prefix {
     @apply font-mono text-[10px] text-slate-500 bg-slate-800/50 px-1.5 py-0.5 rounded border border-white/5;
   }
+
+  .secret-glow {
+    box-shadow: inset 0 0 15px rgba(19, 127, 236, 0.15), 0 0 10px rgba(19, 127, 236, 0.1);
+    border-color: rgba(19, 127, 236, 0.4) !important;
+  }
 }

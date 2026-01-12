@@ -7,6 +7,7 @@ import JoinTeam from './components/JoinTeam';
 import Dashboard from './components/Dashboard';
 import Vaults from './components/Vaults';
 import ServiceTokens from './components/ServiceTokens';
+import VaultDetail from './components/VaultDetail';
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/join-team" element={<JoinTeam />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/vaults" element={<Vaults />} />
+        <Route path="/vault/:id" element={<VaultDetail />} />
         <Route path="/service-tokens" element={<ServiceTokens />} />
       </Routes>
     </Router>

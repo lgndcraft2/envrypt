@@ -37,7 +37,10 @@ const Vaults: React.FC = () => {
                 </header>
                 <div className="p-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                        <div className="group relative bg-[#111820] border border-[#1c2127] p-6 rounded-xl tech-border hover:border-primary/40 transition-all cursor-pointer glow-red">
+                        <div
+                            onClick={() => window.location.href = '/vault/backend-production'}
+                            className="group relative bg-[#111820] border border-[#1c2127] p-6 rounded-xl tech-border hover:border-primary/40 transition-all cursor-pointer glow-red"
+                        >
                             <div className="flex justify-between items-start mb-6">
                                 <div className="h-12 w-12 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center justify-center text-red-500">
                                     <span className="material-symbols-outlined text-2xl">rocket_launch</span>
