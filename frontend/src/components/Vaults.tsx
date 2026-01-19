@@ -18,6 +18,9 @@ const Vaults: React.FC = () => {
     const { activeTeam } = useTeam();
     const navigate = useNavigate();
 
+    const role = activeTeam?.role?.toUpperCase();
+    const isAdmin = role === 'OWNER' || role === 'ADMIN';
+
     const [vaults, setVaults] = useState<Vault[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isCreateVaultOpen, setIsCreateVaultOpen] = useState(false);
@@ -91,14 +94,16 @@ const Vaults: React.FC = () => {
                     </div>
                 </div>
                 <div className="flex items-center gap-4">
-                    <button
-                        onClick={() => setIsCreateVaultOpen(true)}
-                        disabled={!activeTeam}
-                        className="bg-primary hover:bg-primary/90 text-white text-sm font-bold px-4 py-2 rounded-lg flex items-center gap-2 transition-all glow-primary cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <span className="material-symbols-outlined text-sm">add</span>
-                        Create Vault
-                    </button>
+                    {isAdmin && (
+                        <button
+                            onClick={() => setIsCreateVaultOpen(true)}
+                            disabled={!activeTeam}
+                            className="bg-primary hover:bg-primary/90 text-white text-sm font-bold px-4 py-2 rounded-lg flex items-center gap-2 transition-all glow-primary cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <span className="material-symbols-outlined text-sm">add</span>
+                            Create Vault
+                        </button>
+                    )}
                     <HeaderProfileDropdown />
                 </div>
             </header>
@@ -120,16 +125,18 @@ const Vaults: React.FC = () => {
                                         <div className="h-12 w-12 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
                                             <span className="material-symbols-outlined text-2xl">lock</span>
                                         </div>
-                                        <button 
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setSelectedVault(vault);
-                                                setIsSettingsOpen(true);
-                                            }}
-                                            className="text-slate-500 hover:text-white transition-colors p-1 hover:bg-white/5 rounded"
-                                        >
-                                            <span className="material-symbols-outlined">more_horiz</span>
-                                        </button>
+                                        {isAdmin && (
+                                            <button 
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setSelectedVault(vault);
+                                                    setIsSettingsOpen(true);
+                                                }}
+                                                className="text-slate-500 hover:text-white transition-colors p-1 hover:bg-white/5 rounded"
+                                            >
+                                                <span className="material-symbols-outlined">more_horiz</span>
+                                            </button>
+                                        )}
                                     </div>
                                     <div className="space-y-1 mb-6">
                                         <h3 className="text-lg font-bold text-white group-hover:text-primary transition-colors">{vault.name}</h3>
@@ -146,26 +153,30 @@ const Vaults: React.FC = () => {
                                     </div>
                                 </div>
                             ))}
-                            <button
-                                onClick={() => setIsCreateVaultOpen(true)}
-                                className="group relative border-2 border-dashed border-[#1c2127] p-6 rounded-xl hover:border-primary/50 hover:bg-primary/5 transition-all flex flex-col items-center justify-center min-h-[220px] cursor-pointer"
-                            >
-                                <div className="h-12 w-12 rounded-full border border-dashed border-slate-600 flex items-center justify-center text-slate-500 group-hover:text-primary group-hover:border-primary transition-all mb-4">
-                                    <span className="material-symbols-outlined text-2xl font-light">add</span>
-                                </div>
-                                <span className="text-sm font-bold text-slate-500 group-hover:text-primary uppercase tracking-widest">New Vault</span>
-                            </button>
+                            {isAdmin && (
+                                <button
+                                    onClick={() => setIsCreateVaultOpen(true)}
+                                    className="group relative border-2 border-dashed border-[#1c2127] p-6 rounded-xl hover:border-primary/50 hover:bg-primary/5 transition-all flex flex-col items-center justify-center min-h-[220px] cursor-pointer"
+                                >
+                                    <div className="h-12 w-12 rounded-full border border-dashed border-slate-600 flex items-center justify-center text-slate-500 group-hover:text-primary group-hover:border-primary transition-all mb-4">
+                                        <span className="material-symbols-outlined text-2xl font-light">add</span>
+                                    </div>
+                                    <span className="text-sm font-bold text-slate-500 group-hover:text-primary uppercase tracking-widest">New Vault</span>
+                                </button>
+                            )}
                         </div>
                     ) : (
                         <div className="text-center py-20">
                             <h3 className="text-xl font-bold text-white mb-2">No vaults found</h3>
                             <p className="text-slate-500 mb-6">Create your first vault to start storing secrets securely.</p>
-                            <button
-                                onClick={() => setIsCreateVaultOpen(true)}
-                                className="bg-primary hover:bg-primary/90 text-white font-bold px-6 py-3 rounded-lg transition-all glow-primary"
-                            >
-                                Create Vault
-                            </button>
+                            {isAdmin && (
+                                <button
+                                    onClick={() => setIsCreateVaultOpen(true)}
+                                    className="bg-primary hover:bg-primary/90 text-white font-bold px-6 py-3 rounded-lg transition-all glow-primary"
+                                >
+                                    Create Vault
+                                </button>
+                            )}
                         </div>
                     )
                 ) : (

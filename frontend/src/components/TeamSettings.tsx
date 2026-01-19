@@ -22,6 +22,9 @@ const TeamSettings: React.FC = () => {
     const [isSaving, setIsSaving] = useState(false);
     const [deletingMemberId, setDeletingMemberId] = useState<string | null>(null);
 
+    const role = activeTeam?.role?.toUpperCase();
+    const isAdmin = role === 'OWNER' || role === 'ADMIN';
+
     useEffect(() => {
         if (activeTeam) {
             setTeamName(activeTeam.name);
@@ -97,10 +100,11 @@ const TeamSettings: React.FC = () => {
                             <div className="space-y-1.5">
                                 <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Team Name</label>
                                 <input 
-                                    className="w-full bg-black/40 border border-[#1c2127] rounded text-sm py-2.5 px-4 text-slate-200 focus:ring-1 focus:ring-primary focus:border-primary placeholder-slate-700 outline-none transition-all" 
+                                    className="w-full bg-black/40 border border-[#1c2127] rounded text-sm py-2.5 px-4 text-slate-200 focus:ring-1 focus:ring-primary focus:border-primary placeholder-slate-700 outline-none transition-all disabled:opacity-50 disabled:cursor-not-allowed" 
                                     type="text" 
                                     value={teamName}
                                     onChange={(e) => setTeamName(e.target.value)}
+                                    disabled={!isAdmin}
                                 />
                             </div>
                             <div className="space-y-1.5">
@@ -109,22 +113,24 @@ const TeamSettings: React.FC = () => {
                             </div>
                         </div>
                     </div>
-                    <div className="pt-4 border-t border-[#1c2127]/50 flex justify-end">
-                        <button 
-                            onClick={handleUpdateTeam}
-                            disabled={isSaving}
-                            className="bg-primary hover:bg-blue-600 disabled:bg-slate-700 disabled:cursor-not-allowed text-white text-[10px] font-bold py-2 px-6 rounded uppercase tracking-widest transition-colors shadow-lg shadow-primary/10 flex items-center gap-2"
-                        >
-                            {isSaving ? (
-                                <>
-                                    <span className="material-symbols-outlined animate-spin text-sm">donut_large</span>
-                                    Saving...
-                                </>
-                            ) : (
-                                'Save Changes'
-                            )}
-                        </button>
-                    </div>
+                    {isAdmin && (
+                        <div className="pt-4 border-t border-[#1c2127]/50 flex justify-end">
+                            <button 
+                                onClick={handleUpdateTeam}
+                                disabled={isSaving}
+                                className="bg-primary hover:bg-blue-600 disabled:bg-slate-700 disabled:cursor-not-allowed text-white text-[10px] font-bold py-2 px-6 rounded uppercase tracking-widest transition-colors shadow-lg shadow-primary/10 flex items-center gap-2"
+                            >
+                                {isSaving ? (
+                                    <>
+                                        <span className="material-symbols-outlined animate-spin text-sm">donut_large</span>
+                                        Saving...
+                                    </>
+                                ) : (
+                                    'Save Changes'
+                                )}
+                            </button>
+                        </div>
+                    )}
                 </div>
             </section>
             <section className="mb-12">
@@ -273,34 +279,42 @@ const TeamSettings: React.FC = () => {
                                 </div>
                             </td>
                             <td className="px-8 py-5">
-                                <div className="relative w-full max-w-[140px]">
-                                    <select
-                                        value={member.role}
-                                        onChange={(e) => handleRoleChange(member.user_id, e.target.value)}
-                                        className="w-full bg-slate-900 border border-[#1c2127] text-[10px] font-bold text-primary rounded px-2 py-1.5 appearance-none focus:ring-1 focus:ring-primary uppercase tracking-widest outline-none cursor-pointer"
-                                    >
-                                        <option value="Admin">Admin</option>
-                                        <option value="Member">Member</option>
-                                        <option value="Observer">Observer</option>
-                                    </select>
-                                    <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-sm pointer-events-none text-primary/50">expand_more</span>
-                                </div>
+                                {isAdmin ? (
+                                    <div className="relative w-full max-w-[140px]">
+                                        <select
+                                            value={member.role}
+                                            onChange={(e) => handleRoleChange(member.user_id, e.target.value)}
+                                            className="w-full bg-slate-900 border border-[#1c2127] text-[10px] font-bold text-primary rounded px-2 py-1.5 appearance-none focus:ring-1 focus:ring-primary uppercase tracking-widest outline-none cursor-pointer"
+                                        >
+                                            <option value="Admin">Admin</option>
+                                            <option value="Member">Member</option>
+                                            <option value="Observer">Observer</option>
+                                        </select>
+                                        <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-sm pointer-events-none text-primary/50">expand_more</span>
+                                    </div>
+                                ) : (
+                                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-2 py-1.5 border border-transparent">
+                                        {member.role}
+                                    </span>
+                                )}
                             </td>
                             <td className="px-8 py-5 text-slate-400 font-mono">
                                 {new Date(member.joined_at).toLocaleDateString()}
                             </td>
                             <td className="px-8 py-5 text-right">
-                                <button
-                                    onClick={() => handleDeleteMember(member.user_id)}
-                                    disabled={deletingMemberId === member.user_id}
-                                    className="text-slate-600 hover:text-[#ef4444] transition-colors disabled:opacity-50 disabled:cursor-wait"
-                                >
-                                    {deletingMemberId === member.user_id ? (
-                                        <span className="material-symbols-outlined text-lg animate-spin">refresh</span>
-                                    ) : (
-                                        <span className="material-symbols-outlined text-lg">delete</span>
-                                    )}
-                                </button>
+                                {isAdmin && (
+                                    <button
+                                        onClick={() => handleDeleteMember(member.user_id)}
+                                        disabled={deletingMemberId === member.user_id}
+                                        className="text-slate-600 hover:text-[#ef4444] transition-colors disabled:opacity-50 disabled:cursor-wait"
+                                    >
+                                        {deletingMemberId === member.user_id ? (
+                                            <span className="material-symbols-outlined text-lg animate-spin">refresh</span>
+                                        ) : (
+                                            <span className="material-symbols-outlined text-lg">delete</span>
+                                        )}
+                                    </button>
+                                )}
                             </td>
                         </tr>
                     ))}
@@ -355,7 +369,7 @@ const TeamSettings: React.FC = () => {
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
-                        {activeTab === 'members' && (
+                        {activeTab === 'members' && isAdmin && (
                             <button className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded text-xs font-bold uppercase tracking-widest glow-primary transition-all">
                                 <span className="material-symbols-outlined text-sm">person_add</span>
                                 Invite New
@@ -376,14 +390,18 @@ const TeamSettings: React.FC = () => {
                             <span className="material-symbols-outlined text-lg">group</span>
                             Members
                         </button>
-                        <button onClick={() => setActiveTab('billing')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded text-sm font-medium transition-colors ${activeTab === 'billing' ? 'bg-white/5 text-primary border border-primary/20' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}>
-                            <span className="material-symbols-outlined text-lg">credit_card</span>
-                            Billing
-                        </button>
-                        <button onClick={() => setActiveTab('danger')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded text-sm font-medium mt-8 transition-colors ${activeTab === 'danger' ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'text-[#ef4444]/70 hover:text-[#ef4444] hover:bg-red-500/5'}`}>
-                            <span className="material-symbols-outlined text-lg">warning</span>
-                            Danger Zone
-                        </button>
+                        {isAdmin && (
+                            <>
+                                <button onClick={() => setActiveTab('billing')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded text-sm font-medium transition-colors ${activeTab === 'billing' ? 'bg-white/5 text-primary border border-primary/20' : 'text-slate-500 hover:text-slate-300 hover:bg-white/5'}`}>
+                                    <span className="material-symbols-outlined text-lg">credit_card</span>
+                                    Billing
+                                </button>
+                                <button onClick={() => setActiveTab('danger')} className={`w-full flex items-center gap-3 px-4 py-2.5 rounded text-sm font-medium mt-8 transition-colors ${activeTab === 'danger' ? 'bg-red-500/10 text-red-500 border border-red-500/20' : 'text-[#ef4444]/70 hover:text-[#ef4444] hover:bg-red-500/5'}`}>
+                                    <span className="material-symbols-outlined text-lg">warning</span>
+                                    Danger Zone
+                                </button>
+                            </>
+                        )}
                     </aside>
 
                     {/* Content Area */}
