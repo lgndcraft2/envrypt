@@ -9,16 +9,21 @@ const Dashboard: React.FC = () => {
     const { activeTeam } = useTeam();
     const navigate = useNavigate();
     const [recentLogs, setRecentLogs] = useState<any[]>([]);
+    const [stats, setStats] = useState<{active_variables: number, active_members: number} | null>(null);
 
     useEffect(() => {
         if (activeTeam) {
             // Fetch 5 recent logs
             api.get<any[]>(`/audit-logs?team_id=${activeTeam.id}&limit=5`)
                .then(data => {
-                   // Ensure data is array and slice just in case backend ignores limit
                    if (Array.isArray(data)) setRecentLogs(data.slice(0, 5)); 
                })
                .catch(err => console.error("Failed to fetch dashboard logs", err));
+
+            // Fetch Stats
+            api.get<any>(`/auth/teams/${activeTeam.id}/stats`)
+               .then(data => setStats(data))
+               .catch(err => console.error("Failed to fetch stats", err));
         }
     }, [activeTeam]);
 
@@ -59,8 +64,10 @@ const Dashboard: React.FC = () => {
                                 <span className="material-symbols-outlined text-teal-400">key</span>
                             </div>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-3xl font-bold font-mono text-white">--</span>
-                                <span className="text-[10px] text-teal-500 font-mono">Syncing...</span>
+                                <span className="text-3xl font-bold font-mono text-white">
+                                    {stats ? stats.active_variables : '--'}
+                                </span>
+                                <span className="text-[10px] text-teal-500 font-mono">ENCRYPTED</span>
                             </div>
                         </div>
                         <div className="bg-[#111820] border border-[#1c2127] p-5 rounded-lg tech-border hover:border-primary/30 transition-colors">
@@ -69,7 +76,9 @@ const Dashboard: React.FC = () => {
                                 <span className="material-symbols-outlined text-primary">group</span>
                             </div>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-3xl font-bold font-mono text-white">--</span>
+                                <span className="text-3xl font-bold font-mono text-white">
+                                    {stats ? stats.active_members : '--'}
+                                </span>
                                 <span className="text-xs text-slate-500 font-mono">/ 20 slots</span>
                             </div>
                         </div>

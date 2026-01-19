@@ -3,6 +3,7 @@ import { useOutletContext, useNavigate } from 'react-router-dom';
 import HeaderProfileDropdown from './HeaderProfileDropdown';
 import { useTeam } from '../contexts/TeamContext';
 import { api } from '../lib/api';
+import VaultSettingsModal from './VaultSettingsModal';
 
 interface Vault {
     id: string;
@@ -20,6 +21,10 @@ const Vaults: React.FC = () => {
     const [vaults, setVaults] = useState<Vault[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [isCreateVaultOpen, setIsCreateVaultOpen] = useState(false);
+    
+    // Settings Modal State
+    const [selectedVault, setSelectedVault] = useState<Vault | null>(null);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
     // Create Vault State
     const [newVaultName, setNewVaultName] = useState('');
@@ -115,7 +120,14 @@ const Vaults: React.FC = () => {
                                         <div className="h-12 w-12 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
                                             <span className="material-symbols-outlined text-2xl">lock</span>
                                         </div>
-                                        <button className="text-slate-500 hover:text-white transition-colors">
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedVault(vault);
+                                                setIsSettingsOpen(true);
+                                            }}
+                                            className="text-slate-500 hover:text-white transition-colors p-1 hover:bg-white/5 rounded"
+                                        >
                                             <span className="material-symbols-outlined">more_horiz</span>
                                         </button>
                                     </div>
@@ -161,8 +173,16 @@ const Vaults: React.FC = () => {
                         Please select a team to manage vaults.
                     </div>
                 )}
-            </div>
-
+            </div>            
+            {/* Vault Settings Modal */}
+            {selectedVault && activeTeam && (
+                <VaultSettingsModal 
+                    vault={selectedVault}
+                    isOpen={isSettingsOpen}
+                    onClose={() => setIsSettingsOpen(false)}
+                    teamId={activeTeam.id}
+                />
+            )}
             {/* Create Vault Slide-over */}
             {isCreateVaultOpen && (
                 <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-end">

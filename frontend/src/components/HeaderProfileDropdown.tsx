@@ -40,7 +40,7 @@ const HeaderProfileDropdown: React.FC = () => {
 
     const handleSignOut = async () => {
         await supabase.auth.signOut();
-        navigate('/auth'); // Redirect to auth page after logout
+        navigate('/login'); // Redirect to auth pages after logout
         setIsOpen(false);
     };
 
