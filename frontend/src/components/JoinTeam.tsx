@@ -1,8 +1,35 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import HeaderProfileDropdown from './HeaderProfileDropdown';
+import { api } from '../lib/api';
+import { useTeam } from '../contexts/TeamContext';
 
 const JoinTeam: React.FC = () => {
     const navigate = useNavigate();
+    const { refreshTeams } = useTeam();
+    const [inviteCode, setInviteCode] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const handleJoinTeam = async () => {
+        if (!inviteCode.trim()) return;
+
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            await api.post('/auth/teams/join', {
+                code: inviteCode
+            });
+            await refreshTeams();
+            navigate('/dashboard');
+        } catch (err: any) {
+            console.error(err);
+            setError(err.message || 'Failed to join team');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
         <div className="bg-background-dark font-display text-white selection:bg-primary/30 min-h-screen flex flex-col">
@@ -24,9 +51,7 @@ const JoinTeam: React.FC = () => {
                             </span>
                             <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Session Encrypted</span>
                         </div>
-                        <div className="flex items-center gap-3 border-l border-white/10 pl-6">
-                            <div className="size-8 rounded-full bg-gradient-to-tr from-primary to-blue-400 flex items-center justify-center text-xs font-bold text-white">JD</div>
-                        </div>
+                        <HeaderProfileDropdown />
                     </div>
                 </nav>
             </div>
@@ -48,19 +73,34 @@ const JoinTeam: React.FC = () => {
                             <label className="block text-[10px] font-bold tracking-[0.2em] text-white/40 mb-3 uppercase">
                                 Invitation Code
                             </label>
-                            <div className="relative group">
-                                <input className="w-full bg-[#0d1117] border border-white/10 rounded-xl h-16 px-6 font-mono text-xl tracking-[0.2em] text-primary placeholder:text-white/10 focus:ring-0 focus:outline-none input-glow-focus transition-all uppercase" maxLength={10} placeholder="TRX-88-YZ" type="text" />
+                            <div className={`relative group ${error ? 'border-red-500/50' : ''}`}>
+                                <input
+                                    className="w-full bg-[#0d1117] border border-white/10 rounded-xl h-16 px-6 font-mono text-xl tracking-[0.2em] text-primary placeholder:text-white/10 focus:ring-0 focus:outline-none input-glow-focus transition-all uppercase"
+                                    placeholder="TRX-88-YZ"
+                                    type="text"
+                                    value={inviteCode}
+                                    onChange={(e) => setInviteCode(e.target.value)}
+                                // Removed maxLength restriction for now as ID is UUID
+                                />
                                 <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
-                                    <span className="material-symbols-outlined text-emerald-500 text-xl">check_circle</span>
+                                    {!error && inviteCode.length > 0 && <span className="material-symbols-outlined text-emerald-500 text-xl">check_circle</span>}
                                 </div>
                             </div>
+                            {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
                         </div>
                         <div className="space-y-6">
-                            <button onClick={() => navigate('/dashboard')} className="w-full h-14 rounded-xl bg-primary text-white font-bold text-lg transition-all hover:scale-[1.01] active:scale-[0.98] glow-shadow flex items-center justify-center gap-2 group cursor-pointer">
-                                Join Team
-                                <span className="transition-transform group-hover:translate-x-1">→</span>
+                            <button
+                                onClick={handleJoinTeam}
+                                disabled={isLoading}
+                                className="w-full h-14 rounded-xl bg-primary text-white font-bold text-lg transition-all hover:scale-[1.01] active:scale-[0.98] glow-shadow flex items-center justify-center gap-2 group cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isLoading ? (
+                                    <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                                ) : (
+                                    <>Join Team <span className="transition-transform group-hover:translate-x-1">→</span></>
+                                )}
                             </button>
-                            <button onClick={() => navigate('/get-started')} className="inline-block text-white/40 text-sm font-medium hover:text-white transition-colors cursor-pointer">
+                            <button onClick={() => navigate(-1)} className="inline-block text-white/40 text-sm font-medium hover:text-white transition-colors cursor-pointer">
                                 Back
                             </button>
                         </div>

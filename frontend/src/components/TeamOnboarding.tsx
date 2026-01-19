@@ -1,8 +1,19 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import HeaderProfileDropdown from './HeaderProfileDropdown';
+import { useTeam } from '../contexts/TeamContext';
 
 const TeamOnboarding: React.FC = () => {
     const navigate = useNavigate();
+    const { teams, isLoading } = useTeam();
+
+    useEffect(() => {
+        if (!isLoading && teams.length > 0) {
+            navigate('/dashboard');
+        }
+    }, [teams, isLoading, navigate]);
+
+    if (isLoading) return null; // Or a loader
 
     return (
         <div className="bg-background-dark font-display text-white selection:bg-primary/30 min-h-screen flex flex-col">
@@ -24,9 +35,7 @@ const TeamOnboarding: React.FC = () => {
                             </span>
                             <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Session Encrypted</span>
                         </div>
-                        <div className="flex items-center gap-3 border-l border-white/10 pl-6">
-                            <div className="size-8 rounded-full bg-gradient-to-tr from-primary to-blue-400 flex items-center justify-center text-xs font-bold">JD</div>
-                        </div>
+                        <HeaderProfileDropdown />
                     </div>
                 </nav>
             </div>

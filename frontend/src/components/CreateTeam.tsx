@@ -1,8 +1,43 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import HeaderProfileDropdown from './HeaderProfileDropdown';
+import { api } from '../lib/api';
+import { useTeam } from '../contexts/TeamContext';
 
 const CreateTeam: React.FC = () => {
     const navigate = useNavigate();
+    const { refreshTeams } = useTeam();
+    const [teamName, setTeamName] = useState('');
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const handleCreateTeam = async () => {
+        if (!teamName.trim()) return;
+
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            // Simple slug generation
+            const slug = teamName
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '') + '-' + Math.random().toString(36).substring(2, 7);
+
+            await api.post('/auth/teams', {
+                name: teamName,
+                slug: slug
+            });
+
+            await refreshTeams();
+            navigate('/dashboard');
+        } catch (err: any) {
+            console.error(err);
+            setError(err.message || 'Failed to create team');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
         <div className="bg-background-dark font-display text-white selection:bg-primary/30 min-h-screen flex flex-col">
@@ -24,9 +59,7 @@ const CreateTeam: React.FC = () => {
                             </span>
                             <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Secure Channel</span>
                         </div>
-                        <div className="flex items-center gap-3 border-l border-white/10 pl-6">
-                            <div className="size-8 rounded-full bg-gradient-to-tr from-primary to-blue-400 flex items-center justify-center text-xs font-bold">JD</div>
-                        </div>
+                        <HeaderProfileDropdown />
                     </div>
                 </nav>
             </div>
@@ -46,17 +79,33 @@ const CreateTeam: React.FC = () => {
                         <div className="space-y-8">
                             <div className="text-left">
                                 <label className="block text-[10px] font-bold text-primary tracking-[0.2em] mb-3 uppercase">Team Name</label>
-                                <div className="focus-glow-border transition-all duration-300 rounded-xl">
-                                    <input className="w-full h-14 px-5 bg-card-dark/60 border border-white/10 rounded-xl text-white placeholder:text-white/20 focus:ring-0 focus:border-primary/40 focus:outline-none transition-all" placeholder="e.g. Acme Corp Engineering" type="text" />
+                                <div className={`focus-glow-border transition-all duration-300 rounded-xl ${error ? 'border-red-500/50' : ''}`}>
+                                    <input
+                                        className="w-full h-14 px-5 bg-card-dark/60 border border-white/10 rounded-xl text-white placeholder:text-white/20 focus:ring-0 focus:border-primary/40 focus:outline-none transition-all"
+                                        placeholder="e.g. Acme Corp Engineering"
+                                        type="text"
+                                        value={teamName}
+                                        onChange={(e) => setTeamName(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleCreateTeam()}
+                                    />
                                 </div>
+                                {error && <p className="text-red-400 text-xs mt-2">{error}</p>}
                             </div>
-                            <button onClick={() => navigate('/dashboard')} className="w-full h-14 rounded-xl bg-primary text-white font-bold text-lg transition-all hover:scale-[1.02] active:scale-[0.98] glow-shadow flex items-center justify-center gap-2 cursor-pointer">
-                                Create & Continue <span className="material-symbols-outlined text-xl">arrow_right_alt</span>
+                            <button
+                                onClick={handleCreateTeam}
+                                disabled={isLoading}
+                                className="w-full h-14 rounded-xl bg-primary text-white font-bold text-lg transition-all hover:scale-[1.02] active:scale-[0.98] glow-shadow flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {isLoading ? (
+                                    <span className="animate-spin material-symbols-outlined text-xl">progress_activity</span>
+                                ) : (
+                                    <>Create & Continue <span className="material-symbols-outlined text-xl">arrow_right_alt</span></>
+                                )}
                             </button>
                         </div>
                     </div>
                     <div className="mt-8 flex justify-center">
-                        <button onClick={() => navigate('/get-started')} className="flex items-center gap-2 text-sm text-white/40 hover:text-white transition-colors group cursor-pointer">
+                        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-white/40 hover:text-white transition-colors group cursor-pointer">
                             <span className="material-symbols-outlined text-lg transition-transform group-hover:-translate-x-1">west</span>
                             Back
                         </button>
