@@ -5,19 +5,19 @@ import { useTeam } from '../contexts/TeamContext';
 
 const MainLayout: React.FC = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const { teams, isLoading } = useTeam();
+    const { teams, activeTeam, isLoading } = useTeam();
     const navigate = useNavigate();
     const location = useLocation();
 
     // Enforce Team Existence
     useEffect(() => {
         if (!isLoading) {
-            if (teams.length === 0) {
-                // If no teams, redirect to get-started
+            if (teams.length === 0 || !activeTeam) {
+                // If no teams, or no team selected, redirect to get-started (lobby)
                 navigate('/get-started');
             }
         }
-    }, [teams, isLoading, navigate]);
+    }, [teams, activeTeam, isLoading, navigate]);
 
     if (isLoading) {
          return (

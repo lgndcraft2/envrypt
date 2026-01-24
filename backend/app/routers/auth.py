@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from typing import List, Optional
+import uuid
 from ..dependencies import get_current_user, get_scoped_client, supabase, supabase_admin
 from ..utils import log_audit_event
 
@@ -71,6 +72,12 @@ def join_team(invite: TeamJoin, request: Request, user = Depends(get_current_use
     Ideally this would be a separate invite_codes table.
     """
     try:
+        # Validate UUID
+        try:
+            uuid.UUID(invite.code)
+        except ValueError:
+             raise HTTPException(status_code=400, detail="Invalid invite code format. Please check the code.")
+
         # 1. Find Team
         # Security: User can join if they know the UUID.
         # Use global supabase client to bypass RLS if configured with Service Key, 
@@ -273,15 +280,26 @@ def get_team_members(team_id: str, user = Depends(get_current_user), client = De
                     u = supabase_admin.auth.admin.get_user_by_id(m['user_id'])
                     if u and u.user:
                         email = u.user.email
+                        if u.user.user_metadata and 'full_name' in u.user.user_metadata:
+                            name = u.user.user_metadata['full_name']
+                        else:
+                             name = email.split('@')[0]
                 except:
                     pass
             
+            # Fallback for current user if not fetched by admin (though code above likely covers it if admin key works)
+            if m['user_id'] == user.id and name == "Unknown":
+                 if user.user_metadata and 'full_name' in user.user_metadata:
+                     name = user.user_metadata['full_name']
+                 else:
+                     name = user.email.split('@')[0]
+
             enriched_members.append({
                 "user_id": m['user_id'],
                 "role": m.get('role', 'Member'),
                 "joined_at": m.get('created_at', ''),
                 "email": email,
-                "name": email.split('@')[0] if email else "Unknown" # Simple heuristic
+                "name": name
             })
             
         return enriched_members

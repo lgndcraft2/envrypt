@@ -168,7 +168,7 @@ const Vaults: React.FC = () => {
                     ) : (
                         <div className="text-center py-20">
                             <h3 className="text-xl font-bold text-white mb-2">No vaults found</h3>
-                            <p className="text-slate-500 mb-6">Create your first vault to start storing secrets securely.</p>
+                            <p className="text-slate-500 mb-6">Ask the admin to create your first vault to start storing secrets securely.</p>
                             {isAdmin && (
                                 <button
                                     onClick={() => setIsCreateVaultOpen(true)}

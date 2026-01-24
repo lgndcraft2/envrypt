@@ -26,7 +26,7 @@ const AuthPortal: React.FC = () => {
                 password,
             });
             if (error) throw error;
-            navigate('/dashboard');
+            navigate('/get-started');
         } catch (err: any) {
             setError(err.message);
         } finally {

@@ -149,7 +149,6 @@ const AuditLogs: React.FC = () => {
             {/* Sidebar removed from here as it's provided by ProtectedLayout */}
 
             <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[radial-gradient(circle_at_top_right,_#111820_0%,_#0a0f14_40%)] relative">
-                <div className="scanline"></div>
                 <header className="h-20 border-b border-[#1c2127] flex items-center justify-between px-4 md:px-8 shrink-0 relative z-20">
                     <div className="flex items-center gap-3">
                         <button

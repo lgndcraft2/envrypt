@@ -273,22 +273,31 @@ const TeamSettings: React.FC = () => {
                                         {(member.name || member.email || 'U').substring(0, 2).toUpperCase()}
                                     </div>
                                     <div className="flex flex-col">
-                                        <span className="text-sm font-semibold text-white tracking-tight">{member.name || 'Unknown'}</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-sm font-semibold text-white tracking-tight">{member.name || 'Unknown'}</span>
+                                            <span className={`text-[9px] px-1.5 py-0.5 rounded uppercase font-bold tracking-wider border ${
+                                                member.role === 'OWNER' ? 'bg-amber-500/10 text-amber-500 border-amber-500/20' : 
+                                                member.role === 'ADMIN' ? 'bg-primary/10 text-primary border-primary/20' : 
+                                                'bg-slate-800 text-slate-400 border-slate-700'
+                                            }`}>
+                                                {member.role}
+                                            </span>
+                                        </div>
                                         <span className="text-[11px] text-slate-500 font-mono">{member.email}</span>
                                     </div>
                                 </div>
                             </td>
                             <td className="px-8 py-5">
-                                {isAdmin ? (
+                                {isAdmin && member.role !== 'OWNER' ? (
                                     <div className="relative w-full max-w-[140px]">
                                         <select
                                             value={member.role}
                                             onChange={(e) => handleRoleChange(member.user_id, e.target.value)}
                                             className="w-full bg-slate-900 border border-[#1c2127] text-[10px] font-bold text-primary rounded px-2 py-1.5 appearance-none focus:ring-1 focus:ring-primary uppercase tracking-widest outline-none cursor-pointer"
                                         >
-                                            <option value="Admin">Admin</option>
-                                            <option value="Member">Member</option>
-                                            <option value="Observer">Observer</option>
+                                            <option value="ADMIN">Admin</option>
+                                            <option value="MEMBER">Member</option>
+                                            <option value="OBSERVER">Observer</option>
                                         </select>
                                         <span className="material-symbols-outlined absolute right-2 top-1/2 -translate-y-1/2 text-sm pointer-events-none text-primary/50">expand_more</span>
                                     </div>
@@ -343,7 +352,6 @@ const TeamSettings: React.FC = () => {
 
             <main className="flex-1 flex flex-col min-w-0 overflow-hidden bg-[radial-gradient(circle_at_top_right,_#111820_0%,_#0a0f14_40%)]">
                 <header className="h-20 border-b border-[#1c2127] flex items-center justify-between px-4 md:px-8 shrink-0 relative">
-                    <div className="scanline"></div>
                     <div className="flex items-center gap-3">
                         <button
                             className="md:hidden text-slate-400 hover:text-white"

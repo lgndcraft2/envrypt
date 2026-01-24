@@ -26,8 +26,10 @@ const VaultDetail: React.FC = () => {
 
     // Add Secret State
     const [isAddSecretOpen, setIsAddSecretOpen] = useState(false);
+    const [addMode, setAddMode] = useState<'single' | 'bulk'>('single');
     const [newKey, setNewKey] = useState('');
     const [newValue, setNewValue] = useState('');
+    const [bulkContent, setBulkContent] = useState('');
     const [isAdding, setIsAdding] = useState(false);
 
     // Visible Secret ID (for ephemeral viewing or just toggling visibility if we implemented that, 
@@ -75,6 +77,86 @@ const VaultDetail: React.FC = () => {
             fetchData(); // Refresh list
         } catch (err) {
             console.error('Failed to add secret:', err);
+        } finally {
+            setIsAdding(false);
+        }
+    };
+
+    const handleFormatBulk = () => {
+        const lines = bulkContent.split('\n');
+        const parsed = lines
+            .map(line => {
+                const trimmed = line.trim();
+                // Basic env parsing: KEY=VALUE or KEY="VALUE"
+                if (!trimmed || trimmed.startsWith('#')) return null;
+                const idx = trimmed.indexOf('=');
+                if (idx === -1) return null;
+                
+                const key = trimmed.slice(0, idx).trim().toUpperCase();
+                let value = trimmed.slice(idx + 1).trim();
+                
+                // Remove surrounding quotes if matching
+                if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+                    value = value.slice(1, -1);
+                }
+                
+                return { key, value };
+            })
+            .filter((item): item is { key: string, value: string } => item !== null);
+        
+        // Sort by key
+        parsed.sort((a, b) => a.key.localeCompare(b.key));
+        
+        // Reconstruct
+        const formatted = parsed.map(p => `${p.key}=${p.value}`).join('\n');
+        setBulkContent(formatted);
+    };
+
+    const handleBulkAddSecret = async () => {
+        if (!bulkContent.trim() || !id) return;
+        
+        const lines = bulkContent.split('\n');
+        const secretsToAdd: { key: string, value: string }[] = [];
+        
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed.startsWith('#')) continue;
+            
+            const idx = trimmed.indexOf('=');
+            if (idx !== -1) {
+                const key = trimmed.slice(0, idx).trim().toUpperCase();
+                let value = trimmed.slice(idx + 1).trim();
+                
+                if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+                    value = value.slice(1, -1);
+                }
+                
+                if (key) secretsToAdd.push({ key, value });
+            }
+        }
+
+        if (secretsToAdd.length === 0) return;
+
+        setIsAdding(true);
+        try {
+            await Promise.all(secretsToAdd.map(s => 
+                api.post('/secrets', {
+                    vault_id: id,
+                    key: s.key,
+                    value: s.value
+                }).catch(err => {
+                    console.error(`Failed to add secret ${s.key}:`, err);
+                    // Continue with others
+                    return null;
+                })
+            ));
+            
+            setBulkContent('');
+            setIsAddSecretOpen(false);
+            setAddMode('single');
+            fetchData();
+        } catch (err) {
+            console.error('Failed to add bulk secrets:', err);
         } finally {
             setIsAdding(false);
         }
@@ -166,8 +248,10 @@ const VaultDetail: React.FC = () => {
                                 )}
                                 {secrets.map(secret => (
                                     <tr key={secret.id} className="hover:bg-white/5 transition-colors group">
-                                        <td className="px-6 py-4">
-                                            <span className="font-mono text-sm text-primary font-bold">{secret.key}</span>
+                                        <td className="px-6 py-4 max-w-[200px] sm:max-w-[300px]">
+                                            <div className="font-mono text-sm text-primary font-bold truncate" title={secret.key}>
+                                                {secret.key}
+                                            </div>
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
@@ -210,32 +294,79 @@ const VaultDetail: React.FC = () => {
             {isAddSecretOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-[2px]">
                     <div className="max-w-md w-full bg-[#0d1218] border border-[#1c2127] rounded-2xl glow-modal overflow-hidden p-6 tech-border">
-                        <h3 className="text-xl font-bold text-white mb-4">Add New Secret</h3>
-                        <div className="space-y-4 mb-6">
-                            <div>
-                                <label className="block text-[10px] uppercase tracking-widest text-slate-500 font-mono mb-2">Key</label>
-                                <input
-                                    className="w-full bg-[#111820] border border-[#1c2127] rounded-lg px-4 py-2 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none font-mono placeholder:text-slate-700"
-                                    placeholder="e.g. DATABASE_URL"
-                                    value={newKey}
-                                    onChange={e => setNewKey(e.target.value.toUpperCase())}
-                                />
-                            </div>
-                            <div>
-                                <label className="block text-[10px] uppercase tracking-widest text-slate-500 font-mono mb-2">Value</label>
-                                <textarea
-                                    className="w-full bg-[#111820] border border-[#1c2127] rounded-lg px-4 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none font-mono placeholder:text-slate-700 min-h-[100px]"
-                                    placeholder="Enter secret value..."
-                                    value={newValue}
-                                    onChange={e => setNewValue(e.target.value)}
-                                ></textarea>
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-xl font-bold text-white">Add Secrets</h3>
+                            <div className="flex bg-[#111820] rounded-lg p-1 border border-[#1c2127]">
+                                <button
+                                    onClick={() => setAddMode('single')}
+                                    className={`px-3 py-1 text-xs font-bold rounded transition-colors ${addMode === 'single' ? 'bg-primary text-white' : 'text-slate-400 hover:text-white'}`}
+                                >
+                                    Single
+                                </button>
+                                <button
+                                    onClick={() => setAddMode('bulk')}
+                                    className={`px-3 py-1 text-xs font-bold rounded transition-colors ${addMode === 'bulk' ? 'bg-primary text-white' : 'text-slate-400 hover:text-white'}`}
+                                >
+                                    Bulk
+                                </button>
                             </div>
                         </div>
+
+                        {addMode === 'single' ? (
+                            <div className="space-y-4 mb-6">
+                                <div>
+                                    <label className="block text-[10px] uppercase tracking-widest text-slate-500 font-mono mb-2">Key</label>
+                                    <input
+                                        className="w-full bg-[#111820] border border-[#1c2127] rounded-lg px-4 py-2 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none font-mono placeholder:text-slate-700"
+                                        placeholder="e.g. DATABASE_URL"
+                                        value={newKey}
+                                        onChange={e => setNewKey(e.target.value.toUpperCase())}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] uppercase tracking-widest text-slate-500 font-mono mb-2">Value</label>
+                                    <textarea
+                                        className="w-full bg-[#111820] border border-[#1c2127] rounded-lg px-4 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none font-mono placeholder:text-slate-700 min-h-[100px]"
+                                        placeholder="Enter secret value..."
+                                        value={newValue}
+                                        onChange={e => setNewValue(e.target.value)}
+                                    ></textarea>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="space-y-4 mb-6">
+                                <div>
+                                    <div className="flex justify-between items-center mb-2">
+                                        <label className="block text-[10px] uppercase tracking-widest text-slate-500 font-mono">Bulk Secrets</label>
+                                        <button 
+                                            onClick={handleFormatBulk}
+                                            className="text-[10px] text-primary hover:text-white transition-colors uppercase tracking-wider font-bold flex items-center gap-1"
+                                        >
+                                            <span className="material-symbols-outlined text-[10px]">sort</span> Format & Sort
+                                        </button>
+                                    </div>
+                                    <textarea
+                                        className="w-full bg-[#111820] border border-[#1c2127] rounded-lg px-4 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none font-mono placeholder:text-slate-700 min-h-[200px] text-xs leading-relaxed"
+                                        placeholder="KEY=VALUE&#10;ANOTHER_KEY=value"
+                                        value={bulkContent}
+                                        onChange={e => setBulkContent(e.target.value)}
+                                    ></textarea>
+                                    <p className="text-[10px] text-slate-500">Paste your .env content here. Keys are separated by =. One secret per line.</p>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="flex justify-end gap-2">
                             <button onClick={() => setIsAddSecretOpen(false)} className="px-4 py-2 text-slate-400 hover:text-white transition-colors">Cancel</button>
-                            <button onClick={handleAddSecret} disabled={!newKey || !newValue || isAdding} className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded font-bold disabled:opacity-50">
-                                {isAdding ? 'Adding...' : 'Add Secret'}
-                            </button>
+                            {addMode === 'single' ? (
+                                <button onClick={handleAddSecret} disabled={!newKey || !newValue || isAdding} className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded font-bold disabled:opacity-50">
+                                    {isAdding ? 'Adding...' : 'Add Secret'}
+                                </button>
+                            ) : (
+                                <button onClick={handleBulkAddSecret} disabled={!bulkContent.trim() || isAdding} className="bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded font-bold disabled:opacity-50">
+                                    {isAdding ? 'Adding...' : 'Add Secrets'}
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -34,8 +34,10 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, onClose }) => {
                 <div className="p-6">
                     <div className="flex items-center justify-between mb-8">
                         <div className="flex items-center gap-2">
-                            <div className="h-8 w-8 bg-primary rounded flex items-center justify-center">
-                                <span className="material-symbols-outlined text-white font-bold">shield</span>
+                            <div className="size-8 text-primary">
+                                <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                                    <path clipRule="evenodd" d="M24 4H6V17.3333V30.6667H24V44H42V30.6667V17.3333H24V4Z" fill="currentColor" fillRule="evenodd"></path>
+                                </svg>
                             </div>
                             <span className="text-xl font-bold tracking-tight text-white">Envrypt</span>
                         </div>

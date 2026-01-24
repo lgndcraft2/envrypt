@@ -1,17 +1,17 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import HeaderProfileDropdown from './HeaderProfileDropdown';
 import { useTeam } from '../contexts/TeamContext';
+import type { Team } from '../contexts/TeamContext';
 
 const TeamOnboarding: React.FC = () => {
     const navigate = useNavigate();
-    const { teams, isLoading } = useTeam();
+    const { teams, setActiveTeam, isLoading } = useTeam();
 
-    useEffect(() => {
-        if (!isLoading && teams.length > 0) {
-            navigate('/dashboard');
-        }
-    }, [teams, isLoading, navigate]);
+    const handleTeamSelect = (team: Team) => {
+        setActiveTeam(team);
+        navigate('/dashboard');
+    };
 
     if (isLoading) return null; // Or a loader
 
@@ -45,10 +45,46 @@ const TeamOnboarding: React.FC = () => {
                     <div className="rounded-3xl border border-white/10 bg-black/60 backdrop-blur-md p-8 md:p-16 glow-border text-center overflow-hidden">
                         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50"></div>
                         <div className="mb-12">
-                            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">Welcome to <span className="text-primary text-glow">Envrypt</span></h1>
-                            <p className="text-white/60 text-lg max-w-xl mx-auto">Initialize your workspace. Secure collaboration begins with establishing your operational team environment.</p>
+                            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
+                                {teams.length > 0 ? "Select Workspace" : <span>Welcome to <span className="text-primary text-glow">Envrypt</span></span>}
+                            </h1>
+                            <p className="text-white/60 text-lg max-w-xl mx-auto">
+                                {teams.length > 0 
+                                    ? "Access your secure team environment or establish a new node."
+                                    : "Initialize your workspace. Secure collaboration begins with establishing your operational team environment."}
+                            </p>
                         </div>
-                        <div className="grid md:grid-cols-2 gap-8">
+
+                        {teams.length > 0 && (
+                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+                                {teams.map(team => (
+                                    <button
+                                        key={team.id}
+                                        onClick={() => handleTeamSelect(team)}
+                                        className="group relative flex flex-col items-center p-6 rounded-2xl border border-white/10 bg-card-dark/40 transition-all hover:border-primary/40 hover:bg-card-dark/60 hover:scale-[1.02] cursor-pointer"
+                                    >
+                                        <div className="h-16 w-16 mb-4 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center font-bold text-2xl text-slate-400 group-hover:text-primary transition-colors">
+                                            {team.name.substring(0, 2).toUpperCase()}
+                                        </div>
+                                        <h3 className="text-xl font-bold text-white mb-1 group-hover:text-primary transition-colors">{team.name}</h3>
+                                        <p className="text-xs text-slate-500 font-mono mb-4">{(team.role || 'MEMBER').toUpperCase()} Access</p>
+                                        <div className="w-full mt-auto flex items-center justify-center py-2 bg-white/5 rounded-lg text-xs font-bold uppercase tracking-widest text-slate-400 group-hover:bg-primary group-hover:text-black transition-all">
+                                            Enter
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+
+                        {teams.length > 0 && (
+                             <div className="flex items-center gap-4 mb-8">
+                                <div className="h-px bg-white/10 flex-1"></div>
+                                <span className="text-xs font-mono text-slate-500 uppercase tracking-widest">Or Initialize New Node</span>
+                                <div className="h-px bg-white/10 flex-1"></div>
+                            </div>
+                        )}
+
+                        <div className={`grid md:grid-cols-2 gap-8 ${teams.length > 0 ? 'max-w-3xl mx-auto' : ''}`}>
                             <div className="group relative flex flex-col items-center p-8 rounded-2xl border border-white/10 bg-card-dark/40 transition-all hover:border-primary/40 hover:bg-card-dark/60">
                                 <div className="card-gradient absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl pointer-events-none"></div>
                                 <div className="relative mb-6">
