@@ -255,7 +255,10 @@ const VaultDetail: React.FC = () => {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-2">
-                                                <div className="font-mono text-sm text-slate-300 bg-black/30 px-2 py-1 rounded border border-white/5 min-w-[120px]">
+                                                <div 
+                                                    className="font-mono text-sm text-slate-300 bg-black/30 px-2 py-1 rounded border border-white/5 min-w-[120px] max-w-[200px] sm:max-w-[400px] truncate"
+                                                    title={revealedSecrets.has(secret.id) ? secret.value : undefined}
+                                                >
                                                     {revealedSecrets.has(secret.id) ? secret.value : '••••••••••••••••'}
                                                 </div>
                                                 <button
