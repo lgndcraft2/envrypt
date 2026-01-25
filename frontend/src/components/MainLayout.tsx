@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { useTeam } from '../contexts/TeamContext';
 
@@ -7,7 +7,6 @@ const MainLayout: React.FC = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const { teams, activeTeam, isLoading } = useTeam();
     const navigate = useNavigate();
-    const location = useLocation();
 
     // Enforce Team Existence
     useEffect(() => {

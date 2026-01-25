@@ -14,7 +14,6 @@ interface Member {
 
 const TeamSettings: React.FC = () => {
     const { activeTeam, refreshTeams } = useTeam();
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const [activeTab, setActiveTab] = useState<'general' | 'members' | 'billing' | 'danger'>('general');
 
     const [members, setMembers] = useState<Member[]>([]);

@@ -2,12 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { TeamProvider } from '../contexts/TeamContext';
-import Sidebar from './Sidebar';
 
 const ProtectedLayout: React.FC = () => {
     const navigate = useNavigate();
     const [isAuthChecking, setIsAuthChecking] = useState(true);
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     useEffect(() => {
         const checkAuth = async () => {

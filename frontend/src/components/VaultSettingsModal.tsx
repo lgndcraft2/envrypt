@@ -10,13 +10,6 @@
 import React, { useState, useEffect } from 'react';
 import { api } from '../lib/api';
 
-interface TeamMember {
-    user_id: string;
-    role: string;
-    email?: string; // Need to fetch user details or joins
-    name?: string;
-}
-
 interface VaultSettingsModalProps {
     vault: { id: string; name: string };
     isOpen: boolean;
