@@ -8,6 +8,7 @@ app = FastAPI(title="Envrypt API")
 origins = [
     "http://localhost:5173",  # Vite dev server
     "http://127.0.0.1:5173",  # Vite dev server IP
+    "https://envrypt-seven.vercel.app",  # Production frontend domain
 ]
 # Add production domain if configured
 # if settings.FRONTEND_URL:
