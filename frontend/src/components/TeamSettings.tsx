@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useOutletContext } from 'react-router-dom';
 import HeaderProfileDropdown from './HeaderProfileDropdown';
 import { useTeam } from '../contexts/TeamContext';
 import { api } from '../lib/api';
@@ -13,6 +14,7 @@ interface Member {
 }
 
 const TeamSettings: React.FC = () => {
+    const { setIsMobileMenuOpen } = useOutletContext<any>();
     const { activeTeam, refreshTeams } = useTeam();
     const [activeTab, setActiveTab] = useState<'general' | 'members' | 'billing' | 'danger'>('general');
 
