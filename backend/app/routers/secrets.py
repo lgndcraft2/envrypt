@@ -46,6 +46,11 @@ def create_vault(vault: VaultCreate, request: Request, user = Depends(get_curren
     if not client:
          raise HTTPException(status_code=503, detail="DB unavailable")
     try:
+        # Check for duplicate name in team
+        existing = client.table("vaults").select("id").eq("team_id", vault.team_id).eq("name", vault.name).execute()
+        if existing.data:
+            raise HTTPException(status_code=400, detail="A vault with this name already exists in the team.")
+
         response = client.table("vaults").insert({
             "team_id": vault.team_id,
             "name": vault.name
@@ -143,53 +148,171 @@ def create_secret(secret: SecretCreate, request: Request, user = Depends(get_cur
 def get_secrets(vault_id: str, request: Request, user = Depends(get_current_user), client = Depends(get_scoped_client)):
     try:
         # RLS: "Members can view secrets"
-        response = client.table("secrets").select("*").eq("vault_id", vault_id).execute()
+        response = client.table("secrets").select("id, key, version, updated_at").eq("vault_id", vault_id).execute()
         
+        # We don't return values here anymore for security
         results = []
         for row in response.data:
-            try:
-                decrypted = decrypt_secret(row['value_encrypted'])
-                results.append({
-                    "id": row['id'],
-                    "key": row['key'],
-                    "value": decrypted,
-                    "version": row['version'],
-                    "updated_at": row['updated_at']
-                })
-            except Exception:
-                results.append({
-                    "id": row['id'],
-                    "key": row['key'],
-                    "value": "<DECRYPTION_ERROR>",
-                    "version": row['version'],
-                    "updated_at": row['updated_at']
-                })
+            results.append({
+                "id": row['id'],
+                "key": row['key'],
+                "value": None, # Masked by default
+                "version": row['version'],
+                "updated_at": row.get('updated_at')
+            })
         
-        # Log Access (Audit only on reveal? Or listing? Listing usually doesn't reveal values)
-        # But here we REVEAL values. So we should log.
-        # However, listing 50 secrets creates 50 logs? That's too much.
-        # Maybe we iterate and log "Accessed Vault"?
-        # For now, let's log "Accessed Vault" once.
-        if results and len(results) > 0:
-             # We need team_id
-             vault_res = client.table("vaults").select("team_id, name").eq("id", vault_id).execute()
-             if vault_res.data:
-                vault_info = vault_res.data[0]
-                log_audit_event(
-                    client=client,
-                    action="REVEALED",
-                    description=f"Accessed all secrets in vault {vault_info['name']}",
-                    team_id=vault_info['team_id'],
-                    resource_id=vault_id,
-                    resource_type="vault",
-                    actor_id=user.id,
-                    actor_name=user.email.split('@')[0],
-                    actor_type="user",
-                    ip_address=request.client.host,
-                    user_agent=request.headers.get("user-agent")
-                )
-
         return results
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/secrets/{secret_id}/reveal")
+def reveal_secret(secret_id: str, request: Request, user = Depends(get_current_user), client = Depends(get_scoped_client)):
+    if not client:
+         raise HTTPException(status_code=503, detail="DB unavailable")
+    try:
+        # Fetch specific secret
+        response = client.table("secrets").select("*").eq("id", secret_id).execute()
+        if not response.data:
+            raise HTTPException(status_code=404, detail="Secret not found")
+            
+        secret = response.data[0]
+        
+        try:
+            decrypted = decrypt_secret(secret['value_encrypted'])
+        except Exception:
+            raise HTTPException(status_code=500, detail="Decryption failed")
+            
+        # Log Audit (Granular logging for reveals)
+        # Fetch vault info for context
+        vault_res = client.table("vaults").select("team_id, name").eq("id", secret['vault_id']).execute()
+        if vault_res.data:
+            vault_info = vault_res.data[0]
+            log_audit_event(
+                client=client,
+                action="REVEALED",
+                description=f"Revealed secret {secret['key']}",
+                team_id=vault_info['team_id'],
+                resource_id=secret_id,
+                resource_type="secret",
+                actor_id=user.id,
+                actor_name=user.email.split('@')[0],
+                actor_type="user",
+                ip_address=request.client.host,
+                user_agent=request.headers.get("user-agent")
+            )
+            
+        return {
+            "id": secret['id'],
+            "value": decrypted
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.delete("/secrets/{secret_id}")
+def delete_secret(secret_id: str, request: Request, user = Depends(get_current_user), client = Depends(get_scoped_client)):
+    if not client:
+         raise HTTPException(status_code=503, detail="DB unavailable")
+    try:
+        # Get info before delete for audit
+        res = client.table("secrets").select("vault_id, key").eq("id", secret_id).execute()
+        if not res.data:
+            raise HTTPException(status_code=404, detail="Secret not found")
+        secret_info = res.data[0]
+        
+        # Delete
+        client.table("secrets").delete().eq("id", secret_id).execute()
+        
+        # Audit
+        vault_res = client.table("vaults").select("team_id, name").eq("id", secret_info['vault_id']).execute()
+        if vault_res.data:
+            vault_info = vault_res.data[0]
+            log_audit_event(
+                client=client,
+                action="DELETED",
+                description=f"Deleted secret {secret_info['key']}",
+                team_id=vault_info['team_id'],
+                resource_id=secret_id,
+                resource_type="secret",
+                actor_id=user.id,
+                actor_name=user.email.split('@')[0],
+                actor_type="user",
+                ip_address=request.client.host,
+                user_agent=request.headers.get("user-agent")
+            )
+            
+        return {"success": True}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+class SecretUpdate(BaseModel):
+    key: str | None = None
+    value: str | None = None
+
+@router.patch("/secrets/{secret_id}")
+def update_secret(secret_id: str, update: SecretUpdate, request: Request, user = Depends(get_current_user), client = Depends(get_scoped_client)):
+    if not client:
+         raise HTTPException(status_code=503, detail="DB unavailable")
+    
+    updates = {}
+    if update.key is not None:
+        updates['key'] = update.key
+    if update.value is not None:
+        try:
+            updates['value_encrypted'] = encrypt_secret(update.value)
+        except Exception:
+             raise HTTPException(status_code=500, detail="Encryption failed")
+
+    if not updates:
+        return {"message": "No changes"}
+
+    try:
+        # Increment version
+        # We can't easily increment atomically in one call here without a stored proc or fetch-update?
+        # Supabase/Postgres doesn't support "version = version + 1" in simple JS client update easily?
+        # Actually it doesn't. We'll fetch first or trust user? Fetch first is safer.
+        
+        current = client.table("secrets").select("version, vault_id, key").eq("id", secret_id).execute()
+        if not current.data:
+             raise HTTPException(status_code=404, detail="Secret not found")
+        
+        current_data = current.data[0]
+        updates['version'] = current_data['version'] + 1
+        
+        response = client.table("secrets").update(updates).eq("id", secret_id).execute()
+        
+        if not response.data:
+             raise HTTPException(status_code=403, detail="Update failed: Secret not found or permission denied")
+
+        updated_row = response.data[0]
+        
+        # Audit
+        vault_res = client.table("vaults").select("team_id, name").eq("id", current_data['vault_id']).execute()
+        if vault_res.data:
+            vault_info = vault_res.data[0]
+            desc = f"Updated secret {current_data['key']}"
+            if update.key and update.key != current_data['key']:
+                desc += f" (renamed to {update.key})"
+            
+            log_audit_event(
+                client=client,
+                action="UPDATED",
+                description=desc,
+                team_id=vault_info['team_id'],
+                resource_id=secret_id,
+                resource_type="secret",
+                actor_id=user.id,
+                actor_name=user.email.split('@')[0],
+                actor_type="user",
+                ip_address=request.client.host,
+                user_agent=request.headers.get("user-agent")
+            )
+
+        return {
+            "id": updated_row['id'],
+            "key": updated_row['key'],
+            "value": update.value, # Return the value passed in (since it's decrypted from caller perspective)
+            "version": updated_row['version']
+        }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 

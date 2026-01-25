@@ -48,5 +48,6 @@ export const api = {
     get: <T>(endpoint: string, requiresAuth = true) => request<T>(endpoint, { method: 'GET', requiresAuth }),
     post: <T>(endpoint: string, body: any, requiresAuth = true) => request<T>(endpoint, { method: 'POST', body: JSON.stringify(body), requiresAuth }),
     put: <T>(endpoint: string, body: any, requiresAuth = true) => request<T>(endpoint, { method: 'PUT', body: JSON.stringify(body), requiresAuth }),
+    patch: <T>(endpoint: string, body: any, requiresAuth = true) => request<T>(endpoint, { method: 'PATCH', body: JSON.stringify(body), requiresAuth }),
     delete: <T>(endpoint: string, requiresAuth = true) => request<T>(endpoint, { method: 'DELETE', requiresAuth }),
 };

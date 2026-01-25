@@ -32,6 +32,7 @@ const Vaults: React.FC = () => {
     // Create Vault State
     const [newVaultName, setNewVaultName] = useState('');
     const [isCreating, setIsCreating] = useState(false);
+    const [createError, setCreateError] = useState<string | null>(null);
 
     useEffect(() => {
         if (activeTeam) {
@@ -58,6 +59,7 @@ const Vaults: React.FC = () => {
         if (!newVaultName.trim() || !activeTeam) return;
 
         setIsCreating(true);
+        setCreateError(null);
         try {
             await api.post('/vaults', {
                 team_id: activeTeam.id,
@@ -66,9 +68,9 @@ const Vaults: React.FC = () => {
             setNewVaultName('');
             setIsCreateVaultOpen(false);
             fetchVaults();
-        } catch (err) {
+        } catch (err: any) {
             console.error('Failed to create vault:', err);
-            // Handle error (toast/alert)
+            setCreateError(err.message || "Failed to create vault");
         } finally {
             setIsCreating(false);
         }
@@ -96,7 +98,7 @@ const Vaults: React.FC = () => {
                 <div className="flex items-center gap-4">
                     {isAdmin && (
                         <button
-                            onClick={() => setIsCreateVaultOpen(true)}
+                            onClick={() => { setIsCreateVaultOpen(true); setCreateError(null); }}
                             disabled={!activeTeam}
                             className="bg-primary hover:bg-primary/90 text-white text-sm font-bold px-4 py-2 rounded-lg flex items-center gap-2 transition-all glow-primary cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -211,6 +213,11 @@ const Vaults: React.FC = () => {
                             <p className="text-sm text-slate-400">Vaults segregate your secrets by environment or project.</p>
                         </div>
                         <div className="flex-1 overflow-y-auto px-8 custom-scrollbar">
+                            {createError && (
+                                <div className="mb-4 p-3 rounded bg-red-500/10 border border-red-500/20 text-red-500 text-xs font-mono">
+                                    {createError}
+                                </div>
+                            )}
                             <div className="space-y-8 py-4">
                                 <div className="space-y-2">
                                     <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 font-mono">Vault Name</label>
