@@ -2,8 +2,9 @@ from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
 from typing import List, Dict, Any
 from ..dependencies import get_current_user, get_scoped_client, get_service_token_header, get_valid_service_token, supabase, supabase_admin
-from ..crypto import encrypt_secret, decrypt_secret, hash_token
+from ..crypto import encrypt_value, decrypt_value, hash_token
 from ..utils import log_audit_event
+from ..limiter import limiter
 
 router = APIRouter()
 
@@ -94,9 +95,9 @@ def create_secret(secret: SecretCreate, request: Request, user = Depends(get_cur
     if not client:
          raise HTTPException(status_code=503, detail="DB unavailable")
 
-    # Encrypt
+    # Encrypt (Envelope)
     try:
-        encrypted_value = encrypt_secret(secret.value)
+        encryption_result = encrypt_value(secret.value)
     except ValueError as e:
         raise HTTPException(status_code=500, detail="Encryption configuration error")
 
@@ -107,7 +108,8 @@ def create_secret(secret: SecretCreate, request: Request, user = Depends(get_cur
         data = client.table("secrets").insert({
             "vault_id": secret.vault_id,
             "key": secret.key,
-            "value_encrypted": encrypted_value,
+            "value_encrypted": encryption_result['value'],
+            "encrypted_key": encryption_result['key'],
             "created_by": user.id
         }).execute()
         
@@ -166,6 +168,7 @@ def get_secrets(vault_id: str, request: Request, user = Depends(get_current_user
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/secrets/{secret_id}/reveal")
+@limiter.limit("10/minute")
 def reveal_secret(secret_id: str, request: Request, user = Depends(get_current_user), client = Depends(get_scoped_client)):
     if not client:
          raise HTTPException(status_code=503, detail="DB unavailable")
@@ -178,7 +181,7 @@ def reveal_secret(secret_id: str, request: Request, user = Depends(get_current_u
         secret = response.data[0]
         
         try:
-            decrypted = decrypt_secret(secret['value_encrypted'])
+            decrypted = decrypt_value(secret['value_encrypted'], secret['encrypted_key'])
         except Exception:
             raise HTTPException(status_code=500, detail="Decryption failed")
             
@@ -258,7 +261,9 @@ def update_secret(secret_id: str, update: SecretUpdate, request: Request, user =
         updates['key'] = update.key
     if update.value is not None:
         try:
-            updates['value_encrypted'] = encrypt_secret(update.value)
+            enc_res = encrypt_value(update.value)
+            updates['value_encrypted'] = enc_res['value']
+            updates['encrypted_key'] = enc_res['key']
         except Exception:
              raise HTTPException(status_code=500, detail="Encryption failed")
 
@@ -317,6 +322,7 @@ def update_secret(secret_id: str, update: SecretUpdate, request: Request, user =
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/service/vaults/{vault_identifier}/secrets")
+@limiter.limit("60/minute")
 def fetch_secrets_external(
     vault_identifier: str, 
     request: Request, 
@@ -363,7 +369,7 @@ def fetch_secrets_external(
     out = {}
     for row in secrets_res.data:
         try:
-            val = decrypt_secret(row['value_encrypted'])
+            val = decrypt_value(row['value_encrypted'], row.get('encrypted_key'))
             out[row['key']] = val
         except Exception as e:
              out[row['key']] = f"ERROR: Decryption failed - {str(e)}"
