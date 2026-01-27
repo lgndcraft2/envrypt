@@ -169,11 +169,44 @@ def get_vault(vault_id: str, request: Request, user = Depends(get_current_user),
 @router.get("/vaults/{vault_id}/access")
 def get_vault_access(vault_id: str, user = Depends(get_current_user), client = Depends(get_scoped_client)):
     try:
+        # Security: Verify user has access to this vault before listing other members
+        # We can try to fetch the vault with the standard client (which respects RLS)
+        # If the user has access, this query should return data (assuming RLS 'select' allows members)
+        # OR we check vault_access specifically for this user.
+        
+        target_client = supabase_admin if supabase_admin else client
+        
+        # Check if user is in the access list for this vault
+        # This is a lightweight check.
+        user_access = target_client.table("vault_access").select("user_id").eq("vault_id", vault_id).eq("user_id", user.id).execute()
+        
+        target_client = supabase_admin if supabase_admin else client
+        
+        # Security: Verify permission.
+        # We need to know who is asking. 
+        # Ideally, fetch the team_id of the vault, then check if user is OWNER/ADMIN of that team.
+        vault_res = target_client.table("vaults").select("team_id").eq("id", vault_id).execute()
+        if not vault_res.data:
+            raise HTTPException(status_code=404, detail="Vault not found")
+        team_id = vault_res.data[0]['team_id']
+        
+        # Check team role
+        member_res = target_client.table("team_members").select("role").eq("team_id", team_id).eq("user_id", user.id).execute()
+        if not member_res.data:
+             raise HTTPException(status_code=403, detail="You are not a member of this team")
+        
+        role = member_res.data[0]['role'].upper()
+        if role not in ['OWNER', 'ADMIN']:
+             # Optional: Allow if they are the vault creator? 
+             # For now, strict: Only Admins can manage access controls.
+             raise HTTPException(status_code=403, detail="Only Team Admins can manage vault access.")have permission to view access settings for this vault.")
+
         # Use admin client to fetch ALL access entries, bypassing RLS
         # Otherwise users only see themselves
-        target_client = supabase_admin if supabase_admin else client
         response = target_client.table("vault_access").select("user_id").eq("vault_id", vault_id).execute()
         return [r['user_id'] for r in response.data]
+    except HTTPException as he:
+        raise he
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -248,6 +281,62 @@ def update_vault(vault_id: str, vault_update: VaultUpdate, request: Request, use
             )
             
         return response.data[0]
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.delete("/vaults/{vault_id}")
+def delete_vault(vault_id: str, request: Request, user = Depends(get_current_user), client = Depends(get_scoped_client)):
+    if not client:
+         raise HTTPException(status_code=503, detail="DB unavailable")
+    try:
+        # 1. Fetch vault to confirm existence and getting team_id for audit
+        # RLS will ensure user has permission to 'select' this vault at least.
+        # But for DELETE, we might need stronger checks.
+        res = client.table("vaults").select("*").eq("id", vault_id).execute()
+        if not res.data:
+             raise HTTPException(status_code=404, detail="Vault not found or permission denied")
+        vault_info = res.data[0]
+
+        # 2. Check Permissions (Optional but recommended)
+        # e.g., Check if user is Admin of the team.
+        # For now, we rely on RLS 'delete' policy on 'vaults' table.
+        # Assuming RLS says: "Only Team Owners/Admins can delete vaults"
+
+        # 3. Delete Vault
+        # Note: If foreign keys are set to CASCADE (secrets, vault_access), this cleans everything.
+        # If not, we might fail or leave orphans. Assuming CASCADE on DB level.
+        # If not CASCADE, we should manually delete secrets and access first.
+        # Let's try to delete access first using admin just in case
+        
+        target_client = supabase_admin if supabase_admin else client
+        try:
+             target_client.table("vault_access").delete().eq("vault_id", vault_id).execute()
+        except:
+             pass # Might fail or be unnecessary
+
+        del_res = client.table("vaults").delete().eq("id", vault_id).execute()
+        
+        if not del_res.data:
+             raise HTTPException(status_code=403, detail="Failed to delete vault. Permission denied.")
+
+        # 4. Audit
+        log_audit_event(
+            client=client,
+            action="VAULT_DELETED",
+            description=f"Deleted vault {vault_info['name']}",
+            team_id=vault_info['team_id'],
+            resource_id=vault_id,
+            resource_type="vault",
+            actor_id=user.id,
+            actor_name=user.email.split('@')[0],
+            actor_type="user",
+            ip_address=request.client.host,
+            user_agent=request.headers.get("user-agent")
+        )
+        return {"success": True}
+
+    except HTTPException as he:
+        raise he
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 

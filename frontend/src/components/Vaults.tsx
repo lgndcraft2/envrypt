@@ -179,7 +179,6 @@ const Vaults: React.FC = () => {
                     ) : vaults.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                             {vaults.map((vault) => {
-                                const vColor = vaultColors.find(c => c.id === vault.color) || { id: 'blue-500', bg: 'bg-blue-500', ring: 'hover:ring-blue-500', text: 'text-blue-500', border: 'border-blue-500/20' };
                                 // Derive text color and border based on bg color name roughly or map it explicitly in vaultColors
                                 let textColor = 'text-blue-500';
                                 let borderColor = 'border-blue-500/20';

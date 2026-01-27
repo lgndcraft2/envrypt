@@ -117,6 +117,23 @@ const VaultSettingsModal: React.FC<VaultSettingsModalProps> = ({ vault, isOpen, 
             setIsSaving(false);
         }
     };
+
+    const handleDelete = async () => {
+        if (!window.confirm(`Are you sure you want to delete the vault "${vault.name}"? This action cannot be undone and will delete all secrets inside.`)) {
+            return;
+        }
+
+        try {
+            await api.delete(`/vaults/${vault.id}`);
+            if (onVaultUpdated) {
+                onVaultUpdated();
+            }
+            onClose();
+        } catch (err) {
+            console.error("Failed to delete vault", err);
+            alert("Failed to delete vault. Check console for details.");
+        }
+    };
     
     if (!isOpen) return null;
 
@@ -249,7 +266,10 @@ const VaultSettingsModal: React.FC<VaultSettingsModalProps> = ({ vault, isOpen, 
                             </div>
 
                              <div className="pt-4 border-t border-[#1c2127]">
-                                <button className="text-red-400 text-sm font-bold hover:text-red-300 flex items-center gap-2">
+                                <button 
+                                    onClick={handleDelete}
+                                    className="text-red-400 text-sm font-bold hover:text-red-300 flex items-center gap-2 transition-colors"
+                                >
                                     <span className="material-symbols-outlined">delete</span>
                                     Delete Vault
                                 </button>
