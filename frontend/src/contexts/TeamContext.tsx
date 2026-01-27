@@ -13,6 +13,7 @@ interface TeamContextType {
     activeTeam: Team | null;
     setActiveTeam: (team: Team) => void;
     isLoading: boolean;
+    isSwitchingTeam: boolean;
     refreshTeams: () => Promise<void>;
 }
 
@@ -22,10 +23,22 @@ export const TeamProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [teams, setTeams] = useState<Team[]>([]);
     const [activeTeam, setActiveTeamState] = useState<Team | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [isSwitchingTeam, setIsSwitchingTeam] = useState(false);
 
-    const setActiveTeam = (team: Team) => {
+    const setActiveTeam = async (team: Team) => {
+        setIsSwitchingTeam(true); // Trigger UI loading state if desired (future impl)
+        // Immediate update
         setActiveTeamState(team);
         localStorage.setItem('envrypt_active_team_id', team.id);
+        
+        // Short artificial delay or wait for next tick could smooth transitions if needed
+        // But instant is usually best.
+        // We will expose isSwitchingTeam via context if we want global spinner.
+        
+        // Force navigate to dashboard or refresh certain data??? 
+        // For now, React Context propagation is fast. Components listening to activeTeam will re-render.
+        // If content lags, components should handle their internal loading based on activeTeam change ID.
+        setTimeout(() => setIsSwitchingTeam(false), 300); // Visual feedback duration
     };
 
     const refreshTeams = async () => {
@@ -59,7 +72,7 @@ export const TeamProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, []);
 
     return (
-        <TeamContext.Provider value={{ teams, activeTeam, setActiveTeam, isLoading, refreshTeams }}>
+        <TeamContext.Provider value={{ teams, activeTeam, setActiveTeam, isLoading, isSwitchingTeam, refreshTeams }}>
             {children}
         </TeamContext.Provider>
     );

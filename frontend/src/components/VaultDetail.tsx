@@ -424,7 +424,7 @@ const VaultDetail: React.FC = () => {
             <div className="p-4 md:p-8">
                 {/* Secrets Table */}
                 <div className="bg-[#111820] border border-[#1c2127] rounded-lg overflow-hidden relative tech-border">
-                    <div className="overflow-x-auto">
+                    <div className="overflow-x-auto min-h-[350px]">
                         <table className="w-full text-left border-collapse">
                             <thead>
                                 <tr className="border-b border-[#1c2127] bg-slate-900/40">

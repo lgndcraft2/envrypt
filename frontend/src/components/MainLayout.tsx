@@ -5,7 +5,7 @@ import { useTeam } from '../contexts/TeamContext';
 
 const MainLayout: React.FC = () => {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const { teams, activeTeam, isLoading } = useTeam();
+    const { teams, activeTeam, isLoading, isSwitchingTeam } = useTeam();
     const navigate = useNavigate();
 
     // Enforce Team Existence
@@ -18,7 +18,7 @@ const MainLayout: React.FC = () => {
         }
     }, [teams, activeTeam, isLoading, navigate]);
 
-    if (isLoading) {
+    if (isLoading || isSwitchingTeam) {
          return (
             <div className="flex h-screen w-full items-center justify-center bg-background-dark text-white">
                 <span className="material-symbols-outlined animate-spin text-4xl text-primary">donut_large</span>

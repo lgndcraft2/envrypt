@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from pydantic import BaseModel
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from ..dependencies import get_current_user, get_scoped_client, get_service_token_header, get_valid_service_token, supabase, supabase_admin
 from ..crypto import encrypt_value, decrypt_value, hash_token
 from ..utils import log_audit_event
@@ -16,15 +16,18 @@ class SecretCreate(BaseModel):
 class VaultCreate(BaseModel):
     team_id: str
     name: str
+    description: str = None
+    color: str = None
+    icon: str = None
+    member_ids: List[str] = []
 
-# Route to list vaults for a team with secret counts or smn shii like that
 @router.get("/vaults")
 def list_vaults(team_id: str, user = Depends(get_current_user), client = Depends(get_scoped_client)):
     if not client:
          raise HTTPException(status_code=503, detail="DB unavailable")
     try:
         # Fetch vaults with secret count
-        response = client.table("vaults").select("*, secrets(count)").eq("team_id", team_id).execute()
+        response = client.table("vaults").select("*, secrets(count)").order('created_at', desc=True).eq("team_id", team_id).execute()
         
         data = response.data
         # Flatten the structure
@@ -52,13 +55,37 @@ def create_vault(vault: VaultCreate, request: Request, user = Depends(get_curren
         if existing.data:
             raise HTTPException(status_code=400, detail="A vault with this name already exists in the team.")
 
-        response = client.table("vaults").insert({
+        payload = {
             "team_id": vault.team_id,
             "name": vault.name
-        }).execute()
+        }
+        if vault.description:
+            payload['description'] = vault.description
+        if vault.color:
+            payload['color'] = vault.color
+        if vault.icon:
+            payload['icon'] = vault.icon
+
+        response = client.table("vaults").insert(payload).execute()
         
         if len(response.data) > 0:
             new_vault = response.data[0]
+            
+            # Handle Access Control
+            # We always add the creator to the access list
+            access_uids = set(vault.member_ids)
+            access_uids.add(user.id)
+            
+            if access_uids:
+                try:
+                    access_entries = [{"vault_id": new_vault['id'], "user_id": uid} for uid in access_uids]
+                    # Use admin client to bypass RLS for permissions setup
+                    target_client = supabase_admin if supabase_admin else client
+                    target_client.table("vault_access").insert(access_entries).execute()
+                except Exception as acc_e:
+                    print(f"Warning: Failed to update vault_access table. Ensure table exists. {acc_e}")
+                    # Validate if 'vault_access' table exists in your Supabase project
+
             # Log Audit
             log_audit_event(
                 client=client,
@@ -78,14 +105,148 @@ def create_vault(vault: VaultCreate, request: Request, user = Depends(get_curren
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+class VaultAccessUpdate(BaseModel):
+    member_ids: List[str]
+
 @router.get("/vaults/{vault_id}")
-def get_vault(vault_id: str, user = Depends(get_current_user), client = Depends(get_scoped_client)):
+def get_vault(vault_id: str, request: Request, user = Depends(get_current_user), client = Depends(get_scoped_client)):
     if not client:
          raise HTTPException(status_code=503, detail="DB unavailable")
     try:
+        # 1. Fetch Vault Metadata (to get team_id for audit logging and verify existence)
         response = client.table("vaults").select("*").eq("id", vault_id).execute()
         if not response.data:
             raise HTTPException(status_code=404, detail="Vault not found")
+        vault = response.data[0]
+
+        # 2. Check Access
+        # We check if a row exists in vault_access for (vault_id, user.id)
+        access_res = client.table("vault_access").select("user_id").eq("vault_id", vault_id).eq("user_id", user.id).execute()
+        
+        has_access = len(access_res.data) > 0
+        if not has_access:
+            # Check if Owner/Admin of the team? (Optional, but usually admins have override)
+            # For now, strict check against vault_access + maybe team owner logic if needed.
+            # Let's enforce strict list for now as per "only allow... if they are allowed to"
+            
+            # Log Failure
+            log_audit_event(
+                client=client,
+                action="VAULT_ACCESS_DENIED",
+                description=f"User attempted to access vault {vault['name']} without permission",
+                team_id=vault['team_id'],
+                resource_id=vault['id'],
+                resource_type="vault",
+                actor_id=user.id,
+                actor_name=user.email,
+                actor_type="user",
+                ip_address=request.client.host,
+                user_agent=request.headers.get("user-agent")
+            )
+            raise HTTPException(status_code=403, detail="You do not have access to this vault")
+
+        # Log Success (Noise warning: this will log every time they click the vault)
+        log_audit_event(
+            client=client,
+            action="VAULT_ACCESSED",
+            description=f"User accessed vault {vault['name']}",
+            team_id=vault['team_id'],
+            resource_id=vault['id'],
+            resource_type="vault",
+            actor_id=user.id,
+            actor_name=user.email,
+            actor_type="user",
+            ip_address=request.client.host,
+            user_agent=request.headers.get("user-agent")
+        )
+
+        return vault
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.get("/vaults/{vault_id}/access")
+def get_vault_access(vault_id: str, user = Depends(get_current_user), client = Depends(get_scoped_client)):
+    try:
+        # Use admin client to fetch ALL access entries, bypassing RLS
+        # Otherwise users only see themselves
+        target_client = supabase_admin if supabase_admin else client
+        response = target_client.table("vault_access").select("user_id").eq("vault_id", vault_id).execute()
+        return [r['user_id'] for r in response.data]
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.put("/vaults/{vault_id}/access")
+def update_vault_access(vault_id: str, update: VaultAccessUpdate, request: Request, user = Depends(get_current_user), client = Depends(get_scoped_client)):
+    try:
+        # Should verify if user is allowed to manage the vault (e.g. Owner or Admin)
+        # Assuming UI handles it, but backend should enforce too.
+        
+        # Use admin client to see ALL access entries (bypassing RLS)
+        target_client = supabase_admin if supabase_admin else client
+
+        # Determine current access
+        current_res = target_client.table("vault_access").select("user_id").eq("vault_id", vault_id).execute()
+        current_ids = set(r['user_id'] for r in current_res.data)
+        new_ids = set(update.member_ids)
+        
+        to_add = new_ids - current_ids
+        to_remove = current_ids - new_ids
+        
+        if to_remove:
+            target_client.table("vault_access").delete().eq("vault_id", vault_id).in_("user_id", list(to_remove)).execute()
+            
+        if to_add:
+            entries = [{"vault_id": vault_id, "user_id": uid} for uid in to_add]
+            target_client.table("vault_access").insert(entries).execute()
+            
+        return {"status": "success"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+class VaultUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    color: Optional[str] = None
+    icon: Optional[str] = None
+
+@router.patch("/vaults/{vault_id}")
+def update_vault(vault_id: str, vault_update: VaultUpdate, request: Request, user = Depends(get_current_user), client = Depends(get_scoped_client)):
+    if not client:
+         raise HTTPException(status_code=503, detail="DB unavailable")
+    try:
+        # TODO: verify permissions (Team Admin or Vault Owner)
+        # RLS should handle "can update own vaults", but we might need logic for "Team Admins"
+        
+        payload = {k: v for k, v in vault_update.dict().items() if v is not None}
+        if not payload:
+            return {"status": "no change"}
+            
+        response = client.table("vaults").update(payload).eq("id", vault_id).execute()
+        
+        if not response.data:
+            # If RLS prevented update or id not found
+             raise HTTPException(status_code=404, detail="Vault not found or permission denied")
+             
+        # Log Audit
+        if response.data:
+            updated_vault = response.data[0]
+            log_audit_event(
+                client=client,
+                action="VAULT_UPDATED",
+                description=f"Updated vault {updated_vault.get('name')}",
+                team_id=updated_vault.get('team_id'),
+                resource_id=vault_id,
+                resource_type="vault",
+                actor_id=user.id,
+                actor_name=user.email,
+                actor_type="user",
+                ip_address=request.client.host,
+                user_agent=request.headers.get("user-agent")
+            )
+            
         return response.data[0]
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))

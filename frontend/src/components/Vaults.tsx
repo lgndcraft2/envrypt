@@ -11,6 +11,8 @@ interface Vault {
     description?: string;
     created_at?: string;
     secrets_count?: number; // Not yet implemented in backend, but good for UI
+    color?: string;
+    icon?: string;
 }
 
 const Vaults: React.FC = () => {
@@ -33,6 +35,58 @@ const Vaults: React.FC = () => {
     const [newVaultName, setNewVaultName] = useState('');
     const [isCreating, setIsCreating] = useState(false);
     const [createError, setCreateError] = useState<string | null>(null);
+    
+    // Create Vault Form State
+    const [newVaultDescription, setNewVaultDescription] = useState('');
+    const [selectedColor, setSelectedColor] = useState('teal-accent'); 
+    const [selectedIcon, setSelectedIcon] = useState('rocket_launch');
+    const [teamMembers, setTeamMembers] = useState<any[]>([]);
+    const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set());
+
+    useEffect(() => {
+        if (activeTeam && isCreateVaultOpen) {
+            fetchTeamMembers();
+        }
+    }, [activeTeam, isCreateVaultOpen]);
+
+    const fetchTeamMembers = async () => {
+        if (!activeTeam) return;
+        try {
+            const data = await api.get<any[]>(`/auth/teams/${activeTeam.id}/members`);
+            setTeamMembers(data);
+            // Default select all or just current user?
+            // Let's select current user by default 
+            // We need current user ID... from context or JWT?
+            // For now, let's just select everyone as a friendly default or empty
+            
+            // Actually, best to select "active" members if we knew them.
+            // Let's select all initially for easy sharing? Or maybe just user.
+            // Select all by default as per request "make the users with access checked on load"
+            const allIds = new Set(data.map(m => m.user_id));
+            setSelectedMembers(allIds);
+        } catch (err) {
+            console.error("Failed to fetch team members", err);
+        }
+    };
+
+    const toggleMember = (userId: string) => {
+        const newSelected = new Set(selectedMembers);
+        if (newSelected.has(userId)) {
+            newSelected.delete(userId);
+        } else {
+            newSelected.add(userId);
+        }
+        setSelectedMembers(newSelected);
+    };
+
+    const vaultColors = [
+        { id: 'red-500', bg: 'bg-red-500', ring: 'hover:ring-red-500' },
+        { id: 'green-500', bg: 'bg-green-500', ring: 'hover:ring-green-500' },
+        { id: 'blue-500', bg: 'bg-blue-500', ring: 'hover:ring-blue-500' },
+        { id: 'teal-accent', bg: 'bg-[#14b8a6]', ring: 'ring-[#14b8a6]', shadow: 'shadow-[0_0_10px_rgba(20,184,166,0.4)]' }
+    ];
+
+    const vaultIcons = ['rocket_launch', 'shield', 'dns', 'lock'];
 
     useEffect(() => {
         if (activeTeam) {
@@ -42,16 +96,16 @@ const Vaults: React.FC = () => {
         }
     }, [activeTeam]);
 
-    const fetchVaults = async () => {
+    const fetchVaults = async (background = false) => {
         if (!activeTeam) return;
-        setIsLoading(true);
+        if (!background) setIsLoading(true);
         try {
             const data = await api.get<Vault[]>(`/vaults?team_id=${activeTeam.id}`);
             setVaults(data);
         } catch (err) {
             console.error('Failed to fetch vaults:', err);
         } finally {
-            setIsLoading(false);
+            if (!background) setIsLoading(false);
         }
     };
 
@@ -63,9 +117,16 @@ const Vaults: React.FC = () => {
         try {
             await api.post('/vaults', {
                 team_id: activeTeam.id,
-                name: newVaultName
+                name: newVaultName,
+                description: newVaultDescription,
+                color: selectedColor,
+                icon: selectedIcon,
+                member_ids: Array.from(selectedMembers)
             });
             setNewVaultName('');
+            setNewVaultDescription('');
+            setSelectedColor('teal-accent');
+            setSelectedIcon('rocket_launch');
             setIsCreateVaultOpen(false);
             fetchVaults();
         } catch (err: any) {
@@ -117,15 +178,26 @@ const Vaults: React.FC = () => {
                         </div>
                     ) : vaults.length > 0 ? (
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                            {vaults.map((vault) => (
+                            {vaults.map((vault) => {
+                                const vColor = vaultColors.find(c => c.id === vault.color) || { id: 'blue-500', bg: 'bg-blue-500', ring: 'hover:ring-blue-500', text: 'text-blue-500', border: 'border-blue-500/20' };
+                                // Derive text color and border based on bg color name roughly or map it explicitly in vaultColors
+                                let textColor = 'text-blue-500';
+                                let borderColor = 'border-blue-500/20';
+                                let bgColor = 'bg-blue-500/10';
+                                
+                                if (vault.color === 'red-500') { textColor = 'text-red-500'; borderColor = 'border-red-500/20'; bgColor = 'bg-red-500/10'; }
+                                if (vault.color === 'green-500') { textColor = 'text-green-500'; borderColor = 'border-green-500/20'; bgColor = 'bg-green-500/10'; }
+                                if (vault.color === 'teal-accent') { textColor = 'text-[#14b8a6]'; borderColor = 'border-[#14b8a6]/20'; bgColor = 'bg-[#14b8a6]/10'; }
+
+                                return (
                                 <div
                                     key={vault.id}
                                     onClick={() => navigate(`/vault/${vault.id}`)}
                                     className="group relative bg-[#111820] border border-[#1c2127] p-6 rounded-xl tech-border hover:border-primary/40 transition-all cursor-pointer glow-blue"
                                 >
                                     <div className="flex justify-between items-start mb-6">
-                                        <div className="h-12 w-12 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-500">
-                                            <span className="material-symbols-outlined text-2xl">lock</span>
+                                        <div className={`h-12 w-12 rounded-lg ${bgColor} border ${borderColor} flex items-center justify-center ${textColor}`}>
+                                            <span className="material-symbols-outlined text-2xl">{vault.icon || 'lock'}</span>
                                         </div>
                                         {isAdmin && (
                                             <button 
@@ -142,7 +214,10 @@ const Vaults: React.FC = () => {
                                     </div>
                                     <div className="space-y-1 mb-6">
                                         <h3 className="text-lg font-bold text-white group-hover:text-primary transition-colors">{vault.name}</h3>
-                                        <p className="text-xs text-slate-500 font-medium">{vault.id.substring(0, 8)}...</p>
+                                        {/* Display description if available, else standard fallback or nothing */}
+                                        <p className="text-xs text-slate-500 font-medium line-clamp-2 min-h-[32px] overflow-hidden">
+                                            {vault.description || <span className="text-slate-700 italic">No description</span>}
+                                        </p>
                                     </div>
                                     <div className="flex items-center justify-between border-t border-[#1c2127] pt-4">
                                         <div className="flex flex-col">
@@ -154,7 +229,8 @@ const Vaults: React.FC = () => {
                                         <span className="text-[10px] font-mono text-slate-600">Encrypted</span>
                                     </div>
                                 </div>
-                            ))}
+                            );
+                            })}
                             {isAdmin && (
                                 <button
                                     onClick={() => setIsCreateVaultOpen(true)}
@@ -194,6 +270,7 @@ const Vaults: React.FC = () => {
                     isOpen={isSettingsOpen}
                     onClose={() => setIsSettingsOpen(false)}
                     teamId={activeTeam.id}
+                    onVaultUpdated={() => fetchVaults(true)}
                 />
             )}
             {/* Create Vault Slide-over */}
@@ -232,7 +309,80 @@ const Vaults: React.FC = () => {
                                 </div>
                                 <div className="space-y-4">
                                     <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 font-mono">Appearance</label>
-                                    <p className="text-xs text-slate-600">Customization coming soon...</p>
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div className="space-y-3">
+                                            <span className="text-xs text-slate-400">Accent Color</span>
+                                            <div className="flex items-center gap-3">
+                                                {vaultColors.map((color) => (
+                                                    <button
+                                                        key={color.id}
+                                                        onClick={() => setSelectedColor(color.id)}
+                                                        className={`w-8 h-8 rounded-full ${color.bg} ring-2 ring-offset-2 ring-offset-[#0d1218] transition-all ${selectedColor === color.id ? `ring-[#14b8a6] ${color.shadow || ''}` : `ring-transparent ${color.ring}`}`}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="space-y-3">
+                                            <span className="text-xs text-slate-400">Vault Icon</span>
+                                            <div className="flex items-center gap-3">
+                                                {vaultIcons.map((icon) => (
+                                                    <button
+                                                        key={icon}
+                                                        onClick={() => setSelectedIcon(icon)}
+                                                        className={`w-8 h-8 flex items-center justify-center rounded border transition-all ${selectedIcon === icon ? 'bg-[#14b8a6]/10 border-[#14b8a6] text-[#14b8a6]' : 'bg-white/5 border-[#1c2127] text-slate-400 hover:text-white hover:border-[#14b8a6]'}`}
+                                                    >
+                                                        <span className="material-symbols-outlined text-lg">{icon}</span>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 font-mono">Description <span className="text-slate-700 ml-1">(Optional)</span></label>
+                                    <textarea
+                                        className="w-full bg-[#111820] border border-[#1c2127] rounded-lg px-4 py-3 text-white focus:border-[#14b8a6] focus:ring-1 focus:ring-[#14b8a6] transition-all outline-none placeholder:text-slate-600 resize-none font-sans"
+                                        placeholder="What secrets will this vault hold?"
+                                        rows={3}
+                                        value={newVaultDescription}
+                                        onChange={(e) => setNewVaultDescription(e.target.value)}
+                                    />
+                                </div>
+
+                                <div className="space-y-4">
+                                    <label className="text-[10px] uppercase tracking-[0.2em] font-bold text-slate-500 font-mono">Access Control</label>
+                                    <div className="space-y-1">
+                                        {teamMembers.map((member) => (
+                                            <div key={member.id} className="flex items-center justify-between p-3 rounded-lg hover:bg-white/5 transition-colors group">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300">
+                                                        {(member.full_name || member.email || '?').substring(0, 2).toUpperCase()}
+                                                    </div>
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors">
+                                                            {member.full_name || member.email?.split('@')[0]}
+                                                        </span>
+                                                        <span className="text-[10px] text-slate-500 font-mono uppercase tracking-wider">{member.role}</span>
+                                                    </div>
+                                                </div>
+                                                <label className="relative inline-flex items-center cursor-pointer">
+                                                    <input 
+                                                        type="checkbox" 
+                                                        className="sr-only peer"
+                                                        checked={selectedMembers.has(member.user_id)}
+                                                        onChange={() => toggleMember(member.user_id)}
+                                                    />
+                                                    <div className="w-9 h-5 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-[#14b8a6] peer-checked:after:bg-white"></div>
+                                                </label>
+                                            </div>
+                                        ))}
+                                        {teamMembers.length === 0 && (
+                                            <div className="text-center py-4 text-slate-500 text-sm">
+                                                No other team members found.
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -251,6 +401,7 @@ const Vaults: React.FC = () => {
                                     </>
                                 )}
                             </button>
+                            <p className="text-center mt-4 text-[10px] text-slate-600 font-mono uppercase tracking-widest">Initial Audit Log Entry will be created</p>
                         </div>
                     </div>
                 </div>

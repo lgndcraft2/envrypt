@@ -31,5 +31,15 @@ def check_structure():
     except Exception as e:
          print(f"Error checking members: {e}")
 
+    print("\n--- Checking Vault Access Structure ---")
+    try:
+        res = supabase.table("vault_access").select("*").limit(1).execute()
+        if res.data:
+            print("Vault Access Columns:", res.data[0].keys())
+        else:
+            print("Vault Access table exists but is empty.")
+    except Exception as e:
+         print(f"Error checking vault_access: {e}")
+
 if __name__ == "__main__":
     check_structure()
