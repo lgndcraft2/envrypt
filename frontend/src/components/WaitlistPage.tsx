@@ -24,7 +24,7 @@ const WaitlistPage: React.FC = () => {
                 current_tool: currentTool,
                 current_tool_other: otherTool,
                 referral_source: referral
-            });
+            }, false);
             setStatus('success');
             setMessage("You've been added to the waitlist! We'll be in touch soon.");
             setEmail('');
