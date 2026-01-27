@@ -42,8 +42,6 @@ const WaitlistPage: React.FC = () => {
 
     return (
         <div className="min-h-screen bg-[#0a0f14] flex flex-col font-sans text-slate-300 selection:bg-teal-500/30">
-            <Navbar />
-            
             <main className="flex-1 flex flex-col items-center justify-center p-6 relative overflow-hidden pt-32 pb-20">
                 {/* Background Glows (Binary Pattern logic can be added if needed, sticking to current look) */}
                 <div className="absolute top-1/4 -left-32 w-96 h-96 bg-teal-500/10 rounded-full blur-[100px]" />
@@ -82,11 +80,11 @@ const WaitlistPage: React.FC = () => {
                         ) : (
                             <form onSubmit={handleSubmit} className="space-y-8 relative z-10">
                                 <div className="space-y-2">
-                                    <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Work Email</label>
+                                    <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Email</label>
                                     <input 
                                         className="w-full rounded-xl border border-[#1c2127] bg-[#0d1218] px-4 py-3.5 text-white placeholder:text-slate-600 focus:border-teal-500 focus:ring-1 focus:ring-teal-500 transition-all outline-none" 
                                         id="email" 
-                                        placeholder="name@company.com" 
+                                        placeholder="name@example.com" 
                                         required 
                                         type="email"
                                         value={email}
@@ -117,8 +115,8 @@ const WaitlistPage: React.FC = () => {
                                     <label className="text-xs font-bold uppercase tracking-widest text-slate-500">What are you currently using for secrets?</label>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                         {[
-                                            { id: 'env', label: '.env files' },
-                                            { id: 'github', label: 'GitHub secrets' },
+                                            { id: 'env', label: '.env Files' },
+                                            { id: 'github', label: 'GitHub Secrets' },
                                             { id: 'nothing', label: 'Nothing' },
                                             { id: 'other', label: 'Other' },
                                         ].map((tool) => (
@@ -185,9 +183,6 @@ const WaitlistPage: React.FC = () => {
                                         </>
                                     )}
                                 </button>
-                                <p className="text-center text-[10px] text-slate-600 uppercase tracking-[0.2em]">
-                                    Your data is encrypted upon submission.
-                                </p>
                             </form>
                         )}
                     </div>
@@ -205,7 +200,6 @@ const WaitlistPage: React.FC = () => {
                         <div className="flex gap-8 text-xs font-medium text-slate-500">
                             <Link to="/privacy" className="hover:text-teal-500 transition-colors">Privacy Policy</Link>
                             <Link to="/terms" className="hover:text-teal-500 transition-colors">Terms of Service</Link>
-                            <Link to="/audit-logs" className="hover:text-teal-500 transition-colors">Audit Log Preview</Link>
                         </div>
                         <p className="text-xs text-slate-600">© {new Date().getFullYear()} Envrypt. All rights encrypted.</p>
                     </div>
