@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
-from .routers import auth, secrets, tokens, audit # Added audit
+from .routers import auth, secrets, tokens, audit, waitlist # Added waitlist
 from .limiter import limiter
 
 app = FastAPI(title="Envrypt API")
@@ -34,4 +34,5 @@ def health_check():
 app.include_router(auth.router, prefix="/api/auth", tags=["auth"])
 app.include_router(secrets.router, prefix="/api", tags=["secrets"])
 app.include_router(tokens.router, prefix="/api", tags=["tokens"])
-app.include_router(audit.router, prefix="/api", tags=["audit"]) # Added audit router
+app.include_router(audit.router, prefix="/api", tags=["audit"]) 
+app.include_router(waitlist.router, prefix="/api", tags=["waitlist"]) # Added waitlist router

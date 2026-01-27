@@ -169,22 +169,41 @@ def get_vault(vault_id: str, request: Request, user = Depends(get_current_user),
 @router.get("/vaults/{vault_id}/access")
 def get_vault_access(vault_id: str, user = Depends(get_current_user), client = Depends(get_scoped_client)):
     try:
-        # Security: Verify user has access to this vault before listing other members
-        # We can try to fetch the vault with the standard client (which respects RLS)
-        # If the user has access, this query should return data (assuming RLS 'select' allows members)
-        # OR we check vault_access specifically for this user.
-        
         target_client = supabase_admin if supabase_admin else client
         
-        # Check if user is in the access list for this vault
-        # This is a lightweight check.
+        # Security: Check if user is in the access list for this vault
         user_access = target_client.table("vault_access").select("user_id").eq("vault_id", vault_id).eq("user_id", user.id).execute()
+        is_member = len(user_access.data) > 0
         
+        if not is_member:
+             # Fallback: Check if Team Admin/Owner (they should see access even if not explicitly in list)
+            vault_res = target_client.table("vaults").select("team_id").eq("id", vault_id).execute()
+            if vault_res.data:
+                team_id = vault_res.data[0]['team_id']
+                member_res = target_client.table("team_members").select("role").eq("team_id", team_id).eq("user_id", user.id).execute()
+                if member_res.data:
+                    role = member_res.data[0]['role'].upper()
+                    if role not in ['OWNER', 'ADMIN']:
+                        raise HTTPException(status_code=403, detail="You do not have permission to view access settings for this vault.")
+                else:
+                    raise HTTPException(status_code=403, detail="You do not have permission to view access settings for this vault.")
+            else:
+                 raise HTTPException(status_code=404, detail="Vault not found")
+
+        # Use admin client to fetch ALL access entries, bypassing RLS
+        response = target_client.table("vault_access").select("user_id").eq("vault_id", vault_id).execute()
+        return [r['user_id'] for r in response.data]
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@router.put("/vaults/{vault_id}/access")
+def update_vault_access(vault_id: str, update: VaultAccessUpdate, request: Request, user = Depends(get_current_user), client = Depends(get_scoped_client)):
+    try:
         target_client = supabase_admin if supabase_admin else client
         
-        # Security: Verify permission.
-        # We need to know who is asking. 
-        # Ideally, fetch the team_id of the vault, then check if user is OWNER/ADMIN of that team.
+        # Security: Verify permission. Only Team Admins/Owners
         vault_res = target_client.table("vaults").select("team_id").eq("id", vault_id).execute()
         if not vault_res.data:
             raise HTTPException(status_code=404, detail="Vault not found")
@@ -197,27 +216,7 @@ def get_vault_access(vault_id: str, user = Depends(get_current_user), client = D
         
         role = member_res.data[0]['role'].upper()
         if role not in ['OWNER', 'ADMIN']:
-             # Optional: Allow if they are the vault creator? 
-             # For now, strict: Only Admins can manage access controls.
-             raise HTTPException(status_code=403, detail="Only Team Admins can manage vault access.")have permission to view access settings for this vault.")
-
-        # Use admin client to fetch ALL access entries, bypassing RLS
-        # Otherwise users only see themselves
-        response = target_client.table("vault_access").select("user_id").eq("vault_id", vault_id).execute()
-        return [r['user_id'] for r in response.data]
-    except HTTPException as he:
-        raise he
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-@router.put("/vaults/{vault_id}/access")
-def update_vault_access(vault_id: str, update: VaultAccessUpdate, request: Request, user = Depends(get_current_user), client = Depends(get_scoped_client)):
-    try:
-        # Should verify if user is allowed to manage the vault (e.g. Owner or Admin)
-        # Assuming UI handles it, but backend should enforce too.
-        
-        # Use admin client to see ALL access entries (bypassing RLS)
-        target_client = supabase_admin if supabase_admin else client
+             raise HTTPException(status_code=403, detail="Only Team Admins can manage vault access.")
 
         # Determine current access
         current_res = target_client.table("vault_access").select("user_id").eq("vault_id", vault_id).execute()
@@ -235,6 +234,8 @@ def update_vault_access(vault_id: str, update: VaultAccessUpdate, request: Reque
             target_client.table("vault_access").insert(entries).execute()
             
         return {"status": "success"}
+    except HTTPException as he:
+        raise he
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
