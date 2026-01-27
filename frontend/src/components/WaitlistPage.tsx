@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { api } from '../lib/api';
-import Navbar from './Navbar';
 import { Link } from 'react-router-dom';
 
 const WaitlistPage: React.FC = () => {
